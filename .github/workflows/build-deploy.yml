@@ -49,6 +49,8 @@ jobs:
 
       - name: Export static Web build
         run: npx expo export --platform web
+        env:
+          GH_PAGES_BASE_PATH: /${{ github.event.repository.name }}
 
       - name: Upload Web build artifact
         uses: actions/upload-artifact@v4
