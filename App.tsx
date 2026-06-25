@@ -1,7 +1,9 @@
+import './global.css';
 import React, { useCallback, useMemo, useRef, useState } from 'react';
 import {
   FlatList,
   Modal,
+  Platform,
   Pressable,
   SafeAreaView,
   ScrollView,
@@ -21,6 +23,16 @@ import { PurchaseRecord, useStore } from './src/store/useStore';
 
 function formatCurrency(value: number): string {
   return `₺${value.toLocaleString('tr-TR', { maximumFractionDigits: 0 })}`;
+}
+
+async function safeNotificationHaptic() {
+  if (Platform.OS === 'web') return;
+  await Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+}
+
+async function safeImpactHaptic() {
+  if (Platform.OS === 'web') return;
+  await Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
 }
 
 const PURCHASE_SOUND_URI =
@@ -119,7 +131,7 @@ export default function App() {
 
   const triggerDopamineFeedback = useCallback(
     async (dopamine: number) => {
-      await Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+      await safeNotificationHaptic();
       await playPurchaseSound();
       setToast({ visible: true, dopamine });
       setTimeout(() => setToast({ visible: false, dopamine: 0 }), 1800);
@@ -139,7 +151,7 @@ export default function App() {
   const handleAddToCart = useCallback(
     (product: Product) => {
       addToCart(product);
-      Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+      safeImpactHaptic();
     },
     [addToCart]
   );
