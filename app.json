@@ -1,0 +1,43 @@
+{
+  "expo": {
+    "name": "Züğürt Tesellisi",
+    "slug": "zugurt-tesellisi",
+    "version": "1.0.0",
+    "orientation": "portrait",
+    "icon": "./assets/icon.png",
+    "userInterfaceStyle": "automatic",
+    "scheme": "zugurttesellisi",
+    "splash": {
+      "image": "./assets/splash.png",
+      "resizeMode": "contain",
+      "backgroundColor": "#0F0F1A"
+    },
+    "assetBundlePatterns": ["**/*"],
+    "ios": {
+      "supportsTablet": true,
+      "bundleIdentifier": "com.zugurttesellisi.app"
+    },
+    "android": {
+      "adaptiveIcon": {
+        "foregroundImage": "./assets/adaptive-icon.png",
+        "backgroundColor": "#0F0F1A"
+      },
+      "package": "com.zugurttesellisi.app"
+    },
+    "web": {
+      "favicon": "./assets/favicon.png",
+      "bundler": "metro",
+      "name": "Züğürt Tesellisi - Dopamine Shopping Simulator",
+      "shortName": "Tesellİ",
+      "display": "standalone",
+      "themeColor": "#0F0F1A",
+      "backgroundColor": "#0F0F1A"
+    },
+    "plugins": ["expo-av"],
+    "extra": {
+      "eas": {
+        "projectId": "00000000-0000-0000-0000-000000000000"
+      }
+    }
+  }
+}
