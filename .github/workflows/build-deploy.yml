@@ -98,7 +98,7 @@ jobs:
         uses: softprops/action-gh-release@v2
         with:
           tag_name: android-build-${{ github.run_number }}
-          name: Android build #${{ github.run_number }}
+          name: "Android build #${{ github.run_number }}"
           target_commitish: ${{ github.sha }}
           make_latest: true
           files: zugurt-tesellisi-${{ github.run_number }}.apk
