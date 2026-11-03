@@ -17,15 +17,15 @@ export function PriceBlock({
     <View>
       {discount > 0 && (
         <View className="flex-row items-center gap-1">
-          <Text className={`text-slate-400 line-through ${large ? 'text-sm' : 'text-[11px]'}`}>
+          <Text className={`text-muted line-through ${large ? 'text-sm' : 'text-xs'}`}>
             {formatTL(originalPrice as number)}
           </Text>
-          <Text className={`text-red-600 font-bold ${large ? 'text-sm' : 'text-[11px]'}`}>
+          <Text className={`text-red-600 font-bold ${large ? 'text-sm' : 'text-xs'}`}>
             %{discount}
           </Text>
         </View>
       )}
-      <Text className={`text-brand font-extrabold ${large ? 'text-2xl' : 'text-base'}`}>
+      <Text className={`text-link font-extrabold ${large ? 'text-2xl' : 'text-base'}`}>
         {formatTL(price)}
       </Text>
     </View>
@@ -36,8 +36,8 @@ export function Rating({ rating, count }: { rating: number; count: number }) {
   const full = Math.round(rating);
   return (
     <View className="flex-row items-center">
-      <Text className="text-amber-500 text-[11px]">{'★'.repeat(full)}{'☆'.repeat(5 - full)}</Text>
-      <Text className="text-slate-500 text-[11px] ml-1">
+      <Text className="text-amber-500 text-xs">{'★'.repeat(full)}{'☆'.repeat(5 - full)}</Text>
+      <Text className="text-muted text-xs ml-1">
         {rating.toFixed(1)} ({count.toLocaleString('tr-TR')})
       </Text>
     </View>
@@ -54,17 +54,17 @@ export function Stepper({
   onChange: (value: number) => void;
 }) {
   return (
-    <View className="flex-row items-center border border-slate-200 rounded-lg">
+    <View className="flex-row items-center border border-line rounded-lg">
       <Pressable onPress={() => onChange(value - 1)} className="px-3 py-1 active:opacity-50">
-        <Text className="text-brand text-lg font-bold">−</Text>
+        <Text className="text-link text-lg font-bold">−</Text>
       </Pressable>
-      <Text className="text-slate-900 font-semibold min-w-[24px] text-center">{value}</Text>
+      <Text className="text-ink text-base font-semibold min-w-[24px] text-center">{value}</Text>
       <Pressable
         onPress={() => onChange(Math.min(value + 1, max))}
         disabled={value >= max}
         className="px-3 py-1 active:opacity-50 disabled:opacity-30"
       >
-        <Text className="text-brand text-lg font-bold">+</Text>
+        <Text className="text-link text-lg font-bold">+</Text>
       </Pressable>
     </View>
   );
@@ -83,13 +83,13 @@ export function PrimaryButton({
 }) {
   const styles = {
     primary: 'bg-brand',
-    outline: 'bg-white border border-brand',
+    outline: 'bg-card border border-brand',
     gold: 'bg-gold',
-    danger: 'bg-white border border-red-500',
+    danger: 'bg-card border border-red-500',
   }[variant];
   const text = {
     primary: 'text-white',
-    outline: 'text-brand',
+    outline: 'text-link',
     gold: 'text-white',
     danger: 'text-red-600',
   }[variant];
@@ -108,8 +108,8 @@ export function EmptyState({ emoji, title, subtitle }: { emoji: string; title: s
   return (
     <View className="items-center justify-center py-16 px-8">
       <Text className="text-6xl mb-3">{emoji}</Text>
-      <Text className="text-slate-900 font-bold text-lg text-center">{title}</Text>
-      <Text className="text-slate-500 text-sm text-center mt-1">{subtitle}</Text>
+      <Text className="text-ink text-base font-bold text-lg text-center">{title}</Text>
+      <Text className="text-muted text-sm text-center mt-1">{subtitle}</Text>
     </View>
   );
 }

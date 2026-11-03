@@ -1,3 +1,27 @@
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
+
+:root {
+  --color-page: 244 244 246;
+  --color-card: 255 255 255;
+  --color-sunken: 241 245 249;
+  --color-ink: 15 23 42;
+  --color-soft: 51 65 85;
+  --color-muted: 100 116 139;
+  --color-line: 226 232 240;
+  --color-link: 109 40 217;
+  --color-chip: 237 233 254;
+}
+
+.dark:root {
+  --color-page: 10 10 16;
+  --color-card: 26 26 36;
+  --color-sunken: 38 38 52;
+  --color-ink: 241 245 249;
+  --color-soft: 214 220 230;
+  --color-muted: 156 163 180;
+  --color-line: 52 52 70;
+  --color-link: 196 181 253;
+  --color-chip: 46 16 101;
+}

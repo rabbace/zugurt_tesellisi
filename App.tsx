@@ -18,6 +18,7 @@ import { HomeScreen } from './src/screens/HomeScreen';
 import { OrderDetail, OrdersScreen } from './src/screens/OrdersScreen';
 import { ProductDetail } from './src/screens/ProductDetail';
 import { computeTotals, resolveCart, useStore } from './src/store/useStore';
+import { THEME_COLORS, useApplyTheme } from './src/theme';
 import { Order, Product } from './src/types';
 
 type Tab = 'home' | 'cart' | 'orders' | 'account';
@@ -42,8 +43,8 @@ function Toast({ message }: { message: string | null }) {
   if (!message) return null;
   return (
     <View pointerEvents="none" className="absolute bottom-24 left-4 right-4 items-center z-50">
-      <View className="bg-slate-900 rounded-2xl px-4 py-3">
-        <Text className="text-white text-sm font-semibold text-center">{message}</Text>
+      <View className="bg-ink rounded-2xl px-4 py-3">
+        <Text className="text-page text-sm font-semibold text-center">{message}</Text>
       </View>
     </View>
   );
@@ -57,6 +58,8 @@ export default function App() {
 
   const store = useStore();
   const now = useNow(5000);
+  const scheme = useApplyTheme(store.theme);
+  const colors = THEME_COLORS[scheme];
 
   const [tab, setTab] = useState<Tab>('home');
   const [openProduct, setOpenProduct] = useState<Product | null>(null);
@@ -167,17 +170,17 @@ export default function App() {
 
   return (
     <SafeAreaView className="flex-1 bg-page" style={{ paddingTop: Platform.OS === 'android' ? StatusBar.currentHeight : 0 }}>
-      <StatusBar barStyle="dark-content" backgroundColor="#FFFFFF" />
+      <StatusBar barStyle={scheme === 'dark' ? 'light-content' : 'dark-content'} backgroundColor={colors.card} />
 
-      <View className="flex-row items-center justify-between px-4 py-3 bg-white border-b border-slate-100">
-        <Text className="text-brand text-xl font-extrabold">Züğürt Tesellisi</Text>
-        <Pressable onPress={() => setTab('account')} className="bg-brand-light rounded-full px-3 py-1.5 active:opacity-70">
-          <Text className="text-brand font-bold text-xs">💰 {formatTL(store.credit)}</Text>
+      <View className="flex-row items-center justify-between px-4 py-3 bg-card border-b border-line">
+        <Text className="text-link text-xl font-extrabold">Züğürt Tesellisi</Text>
+        <Pressable onPress={() => setTab('account')} className="bg-chip rounded-full px-3 py-1.5 active:opacity-70">
+          <Text className="text-link font-bold text-xs">💰 {formatTL(store.credit)}</Text>
         </Pressable>
       </View>
 
       <View className="flex-1">
-        {tab === 'home' && <HomeScreen catalog={catalog} onOpen={setOpenProduct} onAdd={(p) => handleAdd(p)} />}
+        {tab === 'home' && <HomeScreen catalog={catalog} placeholderColor={colors.muted} onOpen={setOpenProduct} onAdd={(p) => handleAdd(p)} />}
         {tab === 'cart' && (
           <CartScreen
             items={cartItems}
@@ -209,6 +212,9 @@ export default function App() {
             lastFetchedAt={lastFetchedAt}
             onWatchAd={handleWatchAd}
             onFastMode={store.setFastMode}
+            theme={store.theme}
+            onTheme={store.setTheme}
+            switchOffColor={colors.line}
             onAddress={(a) => {
               store.setAddress(a);
               showToast('Adres kaydedildi');
@@ -219,7 +225,7 @@ export default function App() {
         )}
       </View>
 
-      <View className="flex-row bg-white border-t border-slate-100 pb-2">
+      <View className="flex-row bg-card border-t border-line pb-2">
         {TABS.map((t) => {
           const active = tab === t.key;
           return (
@@ -228,11 +234,11 @@ export default function App() {
                 <Text className="text-xl text-center">{t.icon}</Text>
                 {t.key === 'cart' && cartCount > 0 && (
                   <View className="absolute -top-1 -right-3 bg-red-600 rounded-full min-w-[18px] h-[18px] items-center justify-center px-1">
-                    <Text className="text-white text-[10px] font-bold">{cartCount}</Text>
+                    <Text className="text-white text-2xs font-bold">{cartCount}</Text>
                   </View>
                 )}
               </View>
-              <Text className={`text-[11px] mt-0.5 ${active ? 'text-brand font-bold' : 'text-slate-500'}`}>{t.label}</Text>
+              <Text className={`text-xs mt-0.5 ${active ? 'text-link font-bold' : 'text-muted'}`}>{t.label}</Text>
             </Pressable>
           );
         })}

@@ -33,22 +33,22 @@ export function ProductDetail({
   return (
     <Modal visible animationType="slide" onRequestClose={onClose}>
       <View className="flex-1 bg-page">
-        <View className="flex-row items-center px-3 pt-10 pb-3 bg-white border-b border-slate-100">
+        <View className="flex-row items-center px-3 pt-10 pb-3 bg-card border-b border-line">
           <Pressable onPress={onClose} className="px-2 py-1 active:opacity-50">
-            <Text className="text-brand text-base font-bold">‹ Geri</Text>
+            <Text className="text-link text-base font-bold">‹ Geri</Text>
           </Pressable>
-          <Text className="text-slate-500 text-xs ml-2">
+          <Text className="text-muted text-xs ml-2">
             {category ? `${category.emoji} ${category.name}` : ''}
           </Text>
         </View>
 
         <ScrollView contentContainerStyle={{ paddingBottom: 24 }}>
-          <View className="bg-white items-center justify-center h-64">
+          <View className="bg-card items-center justify-center h-64">
             <Text style={{ fontSize: 120 }}>{product.emoji}</Text>
           </View>
 
-          <View className="bg-white px-4 pb-4">
-            <Text className="text-slate-900 text-lg">
+          <View className="bg-card px-4 pb-4">
+            <Text className="text-ink text-lg">
               <Text className="font-extrabold">{product.brand} </Text>
               {product.title}
             </Text>
@@ -60,33 +60,33 @@ export function ProductDetail({
             </View>
           </View>
 
-          <View className="bg-white mt-2 px-4 py-3 gap-2">
-            <Text className="text-slate-700 text-sm">
+          <View className="bg-card mt-2 px-4 py-3 gap-2">
+            <Text className="text-soft text-sm">
               🚚 Tahmini teslimat: <Text className="font-bold">{earliest}</Text>
               {earliest !== latest ? ` – ${latest}` : ''}
             </Text>
-            <Text className="text-slate-700 text-sm">
+            <Text className="text-soft text-sm">
               {product.freeShipping
                 ? '✅ Kargo bedava'
                 : `📦 ${formatTL(economy.freeShippingThreshold)} üzeri kargo bedava, altı ${formatTL(economy.shippingFee)}`}
             </Text>
-            <Text className="text-slate-700 text-sm">
+            <Text className="text-soft text-sm">
               🏪 Satıcı: <Text className="font-bold">{product.seller}</Text>
             </Text>
-            <Text className={`text-sm ${product.stock <= 10 ? 'text-orange-600 font-bold' : 'text-slate-700'}`}>
+            <Text className={`text-sm ${product.stock <= 10 ? 'text-orange-600 font-bold' : 'text-soft'}`}>
               {product.stock <= 10 ? `⏳ Tükenmek üzere! Son ${product.stock} ürün` : '📦 Stokta var'}
             </Text>
           </View>
 
-          <View className="bg-white mt-2 px-4 py-3">
-            <Text className="text-slate-900 font-bold mb-1">Ürün açıklaması</Text>
-            <Text className="text-slate-600 text-sm leading-5">{product.description}</Text>
+          <View className="bg-card mt-2 px-4 py-3">
+            <Text className="text-ink text-base font-bold mb-1">Ürün açıklaması</Text>
+            <Text className="text-soft text-sm leading-5">{product.description}</Text>
           </View>
         </ScrollView>
 
-        <View className="bg-white border-t border-slate-100 px-4 pt-3 pb-6">
+        <View className="bg-card border-t border-line px-4 pt-3 pb-6">
           <View className="flex-row items-center justify-between mb-3">
-            <Text className="text-slate-600 text-sm">Adet</Text>
+            <Text className="text-soft text-sm">Adet</Text>
             <Stepper value={quantity} max={product.stock} onChange={(v) => setQuantity(Math.max(1, v))} />
           </View>
           <View className="flex-row gap-2">

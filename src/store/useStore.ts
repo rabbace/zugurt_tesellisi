@@ -3,6 +3,7 @@ import { create } from 'zustand';
 import { createJSONStorage, persist } from 'zustand/middleware';
 
 import { buildOrder, canCancel } from '../orders/simulate';
+import { ThemeMode } from '../theme';
 import { CartItem, Economy, Order, Product } from '../types';
 
 export const DEFAULT_ADDRESS = 'Teselli Mah. Hayal Sok. No: 7 D: 3, Kadıköy / İstanbul';
@@ -51,6 +52,7 @@ interface StoreState {
   lastAdAt: number | null;
   fastMode: boolean;
   address: string;
+  theme: ThemeMode;
 
   initialize: (startingCredit: number) => void;
   addToCart: (product: Product, quantity?: number) => void;
@@ -62,6 +64,7 @@ interface StoreState {
   rewardAd: (amount: number) => void;
   setFastMode: (value: boolean) => void;
   setAddress: (value: string) => void;
+  setTheme: (value: ThemeMode) => void;
   resetAll: (startingCredit: number) => void;
 }
 
@@ -76,6 +79,7 @@ const initialData = {
   lastAdAt: null as number | null,
   fastMode: true,
   address: DEFAULT_ADDRESS,
+  theme: 'system' as ThemeMode,
 };
 
 export const useStore = create<StoreState>()(
@@ -171,14 +175,17 @@ export const useStore = create<StoreState>()(
 
       setAddress: (value) => set({ address: value }),
 
+      setTheme: (value) => set({ theme: value }),
+
       resetAll: (startingCredit) =>
-        set({ ...initialData, initialized: true, credit: startingCredit }),
+        set((state) => ({ ...initialData, initialized: true, credit: startingCredit, theme: state.theme })),
     }),
     {
       name: 'zugurt-tesellisi-storage',
-      version: 2,
+      version: 3,
       storage: createJSONStorage(() => AsyncStorage),
-      migrate: () => ({ ...initialData }) as unknown as StoreState,
+      migrate: (persisted, version) =>
+        (version === 2 ? { ...initialData, ...(persisted as object) } : { ...initialData }) as unknown as StoreState,
       partialize: (state) => ({
         initialized: state.initialized,
         credit: state.credit,
@@ -190,6 +197,7 @@ export const useStore = create<StoreState>()(
         lastAdAt: state.lastAdAt,
         fastMode: state.fastMode,
         address: state.address,
+        theme: state.theme,
       }),
     }
   )

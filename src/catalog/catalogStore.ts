@@ -60,7 +60,12 @@ export const useCatalogStore = create<CatalogState>()(
       merge: (persisted, current) => {
         const saved = persisted as Partial<CatalogState> | undefined;
         if (!saved?.catalog || !isCatalog(saved.catalog)) return current;
-        if (saved.catalog.updatedAt < fallback.updatedAt) return current;
+        if (
+          saved.catalog.version < fallback.version ||
+          saved.catalog.updatedAt < fallback.updatedAt
+        ) {
+          return current;
+        }
         return { ...current, ...saved };
       },
     }

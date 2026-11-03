@@ -21,10 +21,12 @@ function normalize(text: string): string {
 
 export function HomeScreen({
   catalog,
+  placeholderColor,
   onOpen,
   onAdd,
 }: {
   catalog: Catalog;
+  placeholderColor: string;
   onOpen: (product: Product) => void;
   onAdd: (product: Product) => void;
 }) {
@@ -70,17 +72,17 @@ export function HomeScreen({
           value={query}
           onChangeText={setQuery}
           placeholder="Ürün, marka ara"
-          placeholderTextColor="#94A3B8"
-          className="bg-white border border-slate-200 rounded-xl px-4 py-3 text-slate-900"
+          placeholderTextColor={placeholderColor}
+          className="bg-card border border-line rounded-xl px-4 py-3 text-ink"
         />
       </View>
 
       <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{ paddingHorizontal: 10, paddingVertical: 10 }}>
         <Pressable
           onPress={() => setCategoryId(null)}
-          className={`px-4 py-2 rounded-full mr-2 ${!categoryId ? 'bg-brand' : 'bg-white border border-slate-200'}`}
+          className={`px-4 py-2 rounded-full mr-2 ${!categoryId ? 'bg-brand' : 'bg-card border border-line'}`}
         >
-          <Text className={`text-xs font-semibold ${!categoryId ? 'text-white' : 'text-slate-700'}`}>Tümü</Text>
+          <Text className={`text-xs font-semibold ${!categoryId ? 'text-white' : 'text-soft'}`}>Tümü</Text>
         </Pressable>
         {catalog.categories.map((c) => {
           const active = categoryId === c.id;
@@ -88,9 +90,9 @@ export function HomeScreen({
             <Pressable
               key={c.id}
               onPress={() => setCategoryId(active ? null : c.id)}
-              className={`px-4 py-2 rounded-full mr-2 ${active ? 'bg-brand' : 'bg-white border border-slate-200'}`}
+              className={`px-4 py-2 rounded-full mr-2 ${active ? 'bg-brand' : 'bg-card border border-line'}`}
             >
-              <Text className={`text-xs font-semibold ${active ? 'text-white' : 'text-slate-700'}`}>
+              <Text className={`text-xs font-semibold ${active ? 'text-white' : 'text-soft'}`}>
                 {c.emoji} {c.name}
               </Text>
             </Pressable>
@@ -117,13 +119,13 @@ export function HomeScreen({
           <Pressable
             key={s.key}
             onPress={() => setSort(s.key)}
-            className={`px-3 py-1.5 rounded-lg mr-2 ${sort === s.key ? 'bg-brand-light' : ''}`}
+            className={`px-3 py-1.5 rounded-lg mr-2 ${sort === s.key ? 'bg-chip' : ''}`}
           >
-            <Text className={`text-xs ${sort === s.key ? 'text-brand font-bold' : 'text-slate-500'}`}>{s.label}</Text>
+            <Text className={`text-xs ${sort === s.key ? 'text-link font-bold' : 'text-muted'}`}>{s.label}</Text>
           </Pressable>
         ))}
       </ScrollView>
-      <Text className="text-slate-500 text-xs px-4 pb-1">{products.length} ürün</Text>
+      <Text className="text-muted text-xs px-4 pb-1">{products.length} ürün</Text>
     </View>
   );
 
