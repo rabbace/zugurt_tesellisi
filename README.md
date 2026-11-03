@@ -1,77 +1,76 @@
-# Züğürt Tesellisi (Dopamine Shopping Simulator)
+# Züğürt Tesellisi
 
-Bu uygulama, tek bir kuruş harcamadan, sınırsız sahte bakiye ile ultra lüks veya absürt ürünleri satın alarak dopamin salgılamayı amaçlayan bir "Retail Therapy" (Alışveriş Terapisi) simülatörüdür.
-
-## Desteklenen Platformlar
-- 🤖 Android (APK / AAB)
-- 🍏 iOS (IPA / TestFlight)
-- 🌐 Web Browser (Responsive PWA)
+Gerçek ürünler, gerçekçi fiyatlar, gerçekçi kargo süreci, tek farkla: **sanal kredi**.
+Hiçbir şey gerçekten satın alınmaz, hiçbir ödeme bilgisi istenmez.
 
 ## Özellikler
-- 💰 Sınırsız sahte bakiye (varsayılan: ₺9.999.999.999)
-- 🛍️ Lüks ve absürt ürün kataloğu (yatlar, uzay biletleri, altın burgerler...)
-- 🎉 Satın alma anında ses efekti / haptic feedback ile dopamin tetikleyici geri bildirim
-- 🧠 Dopamine Points (DP): harcanan paraya ve satın alma sıklığına göre artan yapay mutluluk puanı
-- 📊 Harcama geçmişi ve toplam "teselli" istatistikleri
-- 🔁 Bakiye sıfırlandığında tek tıkla "Yeniden Zengin Ol" butonu
-- 🌗 Karanlık/Aydınlık tema desteği
 
-## Teknoloji Yığını
-- [Expo](https://expo.dev) (React Native + Expo Web)
-- TypeScript
-- [Zustand](https://github.com/pmndrs/zustand) (state management, AsyncStorage persist)
-- NativeWind / TailwindCSS (stil — Web'de CSS'e, mobilde `StyleSheet`'e derlenir)
-- `expo-av` (platformlar arası ses efekti soyutlaması)
-- GitHub Actions (CI/CD - EAS Build & Web Deploy)
+- **Ürün kataloğu:** Telefon, elektronik, moda, market ve daha fazlası. Türkiye piyasasına yakın TL fiyatları ve indirimler.
+- **Uzaktan güncellenen fiyatlar:** Katalog `public/catalog.json` dosyasındadır, GitHub Pages'ten yayınlanır. Uygulama açılışta en güncel katalogu çeker. Yeni APK gerekmez. İnternet yoksa uygulama içindeki kopya kullanılır.
+- **Sanal kredi:** İlk açılışta başlangıç kredisi verilir. Kredi bitince ödüllü reklam izleyerek kredi kazanılır.
+- **Sepet ve ödeme:** Adet seçimi, kargo bedava eşiği, kargo ücreti, teslimat adresi.
+- **Sipariş ve kargo takibi:** Sipariş alındı → Hazırlanıyor → Kargoya verildi → Transfer merkezi → Dağıtımda → Teslim edildi. Rastgele gecikmeler ve "adreste bulunamadı" denemeleri olur. Kargoya verilmeden iptal edilen siparişin tutarı iade edilir.
+- **Bildirimler:** Her kargo aşamasında telefon bildirimi gelir (Android).
+- **Hızlı kargo modu:** Test için 1 gün = 2 dakika. Kapatınca süreç gerçek hayattaki gibi günler sürer.
 
-## Kurulum ve Çalıştırma
-1. Bağımlılıkları Yükleyin:
-   ```bash
-   npm install
-   ```
-2. Web Sürümünü Başlatın:
-   ```bash
-   npx expo start --web
-   ```
-3. Mobil (Android/iOS) Sürümünü Başlatın:
-   ```bash
-   npx expo start
-   ```
+## Android'de test etme (bilgisayar gerekmez)
 
-## Proje Yapısı
+Her push'ta GitHub Actions bir APK derler ve **Releases** sayfasına koyar:
+
+1. Telefonda `github.com/rabbace/zugurt_tesellisi/releases` adresini açın.
+2. En üstteki **Android build #N** sürümündeki `.apk` dosyasına dokunun.
+3. Android "bilinmeyen kaynaklardan yükleme" izni isterse izin verin ve kurun.
+
+Yeni sürümler eskisinin üzerine kurulur, veriler korunur.
+
+Web önizleme: `https://rabbace.github.io/zugurt_tesellisi/` (reklam web'de simüle edilir).
+
+## Katalog ve ekonomi ayarları
+
+`public/catalog.json`:
+
+| Alan | Açıklama |
+| --- | --- |
+| `economy.startingCredit` | İlk açılıştaki kredi |
+| `economy.adReward` | Bir reklam başına kazanılan kredi |
+| `economy.adCooldownSeconds` | İki reklam arası bekleme |
+| `economy.freeShippingThreshold` / `shippingFee` | Kargo kuralları |
+| `products[]` | Ürünler (`price`, `originalPrice` → indirim oranı otomatik hesaplanır) |
+
+Dosyayı düzenleyip push etmek yeterli. Uygulama bir sonraki açılışta yeni fiyatları alır. `updatedAt` alanını da güncelleyin.
+
+## Reklamlar (AdMob)
+
+Şu an Google'ın **test** reklam kimlikleri kullanılıyor ("Test Ad" yazan reklamlar). Gerçek reklam için bir AdMob hesabı açılıp:
+
+- `app.json` → `react-native-google-mobile-ads.androidAppId`
+- `src/ads/rewarded.native.ts` → `REWARDED_UNIT_ID`
+
+gerçek kimliklerle değiştirilmelidir.
+
+## Teknoloji
+
+Expo SDK 51 · React Native 0.74 · TypeScript · NativeWind v4 · Zustand (AsyncStorage ile kalıcı) · expo-notifications · react-native-google-mobile-ads
+
+## Proje yapısı
 
 ```
-.
-├── .github/workflows/build-deploy.yml   # CI/CD pipeline (EAS + Web)
-├── App.tsx                              # Uygulama giriş noktası
-├── app.json                             # Expo yapılandırması
-├── package.json                         # Bağımlılıklar ve scriptler
-├── tailwind.config.js                   # NativeWind/Tailwind yapılandırması
-├── src/
-│   ├── store/
-│   │   └── useStore.ts                  # Zustand global state (bakiye, sepet, geçmiş)
-│   └── utils/
-│       └── products.ts                  # Lüks/absürt ürün kataloğu
-└── ARCHITECTURE.md                       # Detaylı mimari dokümantasyonu
+App.tsx                         Sekme yapısı ve uygulama akışı
+public/catalog.json             Ürün kataloğu ve ekonomi ayarları
+src/catalog/catalogStore.ts     Uzaktan katalog + yerel yedek
+src/store/useStore.ts           Kredi, sepet, siparişler
+src/orders/simulate.ts          Kargo zaman çizelgesi ve gecikme simülasyonu
+src/ads/                        Ödüllü reklam (native) / simülasyon (web)
+src/notifications/              Kargo bildirimleri (native) / boş (web)
+src/screens/                    Anasayfa, ürün detayı, sepet, siparişler, hesap
+.github/workflows/              APK derleme + GitHub Pages yayını
 ```
 
-## Komutlar
+## Geliştirme (bilgisayarda)
 
-| Komut | Açıklama |
-|---|---|
-| `npm start` | Expo geliştirme sunucusunu başlatır |
-| `npm run web` | Web sürümünü başlatır |
-| `npm run android` | Android emülatöründe/cihazında çalıştırır |
-| `npm run ios` | iOS simülatöründe/cihazında çalıştırır |
-| `npm run lint` | ESLint ile kod kalitesi kontrolü |
-| `npm run typecheck` | TypeScript tip kontrolü |
-
-## Eklenmesi Gereken Varlıklar (Assets)
-`app.json` aşağıdaki ikon/splash görsellerine referans verir; bu ikili (binary) dosyalar bu depoda yer almaz, projeyi build almadan önce `assets/` klasörüne eklenmelidir:
-- `assets/icon.png` (1024x1024)
-- `assets/splash.png`
-- `assets/adaptive-icon.png` (Android)
-- `assets/favicon.png` (Web)
-
-## Lisans
-MIT
+```bash
+npm install
+npm run web          # tarayıcıda önizleme
+npm run android      # bağlı cihaz/emülatörde native build (Android SDK gerekir)
+npm run typecheck
+```

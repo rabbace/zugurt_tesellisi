@@ -1,85 +1,59 @@
-# Mimari Dokümantasyon — Züğürt Tesellisi
+# Mimari
 
-## Genel Bakış
-
-Züğürt Tesellisi, Expo (React Native + Expo Web) üzerine kurulu, tek kod tabanından Android, iOS ve Web çıktısı üreten istemci taraflı (client-side) bir "Retail Therapy" simülatörüdür. Sunucu yoktur; tüm durum cihaz/tarayıcı üzerinde tutulur ve kalıcılaştırılır.
+## Veri akışı
 
 ```
-┌─────────────────────────────────────────────────────────┐
-│                        App.tsx                          │
-│  (UI: Ürün Listesi, Sepet, Geçmiş, Dopamine Toast)       │
-└───────────────┬───────────────────────────┬──────────────┘
-                │ useStore() hooks          │ getProducts*()
-                ▼                           ▼
-┌───────────────────────────┐   ┌───────────────────────────┐
-│   src/store/useStore.ts   │   │   src/utils/products.ts   │
-│  (Zustand + persist)      │   │  (statik ürün kataloğu)   │
-└───────────────┬───────────┘   └───────────────────────────┘
-                │ persist middleware
-                ▼
-┌───────────────────────────┐
-│ @react-native-async-storage│
-│  (Web: localStorage shim)  │
-└───────────────────────────┘
+public/catalog.json ──(GitHub Pages)──► catalogStore.refresh()  ─┐
+        └──────────(uygulamaya gömülü yedek)─────────────────────┴─► useCatalogStore.catalog
+                                                                         │
+App.tsx ── resolveCart(cart, catalog.products) ── computeTotals() ──► useStore.placeOrder()
+                                                                         │
+                                                         orders/simulate.buildOrder()
+                                                                         │
+                                         notifications.scheduleOrderNotifications(order)
 ```
 
-## Global State (Zustand)
+## Global state (Zustand, AsyncStorage ile kalıcı)
 
-Uygulama tamamen istemci taraflı (client-side) çalışır. Tüm durum `src/store/useStore.ts` içinde tek bir merkezi store olarak yönetilir:
+`src/store/useStore.ts`
 
-| Alan | Tip | Açıklama |
-|---|---|---|
-| `balance` | `number` | Başlangıçta **9.999.999.999 ₺** olan hayali bakiye (`INITIAL_BALANCE`). |
-| `cart` | `CartItem[]` | Sepetteki ürünler dizisi (`{ product, quantity }`). |
-| `dopaminePoints` (DP) | `number` | Harcanan paraya (`log10(price)`) ve satın alma sıklığına/ürünün `dopamineMultiplier` değerine göre artan yapay mutluluk puanı. |
-| `purchaseHistory` | `PurchaseRecord[]` | Grafiklerde ve "Geçmiş" ekranında gösterilmek üzere geçmiş harcamaların kaydı (ürün, fiyat, miktar, kazanılan DP, zaman damgası). |
+| Alan | Açıklama |
+| --- | --- |
+| `credit` | Sanal kredi. İlk açılışta `economy.startingCredit` ile başlar. |
+| `cart` | Sepet. Fiyatlar ödeme anında güncel katalogdan yeniden okunur. |
+| `orders` | Siparişler ve önceden hesaplanmış kargo olayları. |
+| `dopaminePoints` | Teselli puanı: `round(log10(tutar + 10) * 10)` |
+| `fastMode` | Hızlı kargo modu (1 gün = 2 dakika). |
+| `lastAdAt`, `adsWatched` | Reklam bekleme süresi ve istatistik. |
 
-Store, `zustand/middleware`'in `persist` fonksiyonu ile sarılmıştır; `AsyncStorage` adaptörü (`createJSONStorage`) sayesinde bakiye, sepet, DP ve geçmiş, uygulama kapatılıp açıldığında da korunur.
+`src/catalog/catalogStore.ts` katalogu ayrı tutar. Kaydedilmiş katalog, uygulamaya gömülü olandan eskiyse gömülü olan kullanılır.
 
-### Aksiyonlar
-- `addToCart` / `removeFromCart` / `updateCartQuantity` / `clearCart`: Sepet yönetimi.
-- `buyNow(product)`: Tek ürünü anında satın alır, bakiyeyi düşer, DP ekler, geçmişe kaydeder.
-- `checkout()`: Sepetteki tüm ürünleri tek seferde satın alır, toplu DP/bakiye güncellemesi yapar.
-- `resetBalance()`: Bakiyeyi `INITIAL_BALANCE` değerine sıfırlar ("Yeniden Zengin Ol").
+## Sipariş simülasyonu
 
-### Dopamine Points Formülü
-```
-dopamineGained = round( log10(price + 10) * 10 * dopamineMultiplier * quantity )
-```
-Bu formül, çok pahasına ürünlerde getiri artışını logaritmik olarak sınırlarken, ürüne özel `dopamineMultiplier` (kataloğa bakınız: `src/utils/products.ts`) absürtlük/lüks seviyesine göre ek bir çarpan sağlar.
+`buildOrder()` sipariş anında tüm kargo olaylarını gerçek zaman damgalarıyla üretir:
 
-## Ürün Kataloğu (`src/utils/products.ts`)
+1. Sipariş alındı → Hazırlanıyor (≈1 saat) → Kargoya verildi (4-10 saat)
+2. Transfer merkezi
+3. %20 olasılıkla **gecikme** (+1-2 gün, rastgele sebep)
+4. %10 olasılıkla **teslim edilemedi** → ertesi gün tekrar dağıtım
+5. Teslim edildi
 
-Statik, salt-okunur bir `Product[]` dizisi olarak tutulur. Her ürün; `id`, `name`, `description`, `price`, `category`, `emoji` ve `dopamineMultiplier` alanlarına sahiptir. `getProductsByCategory`, `getAllCategories` ve `getProductById` yardımcı fonksiyonları, UI tarafının kataloğu filtrelemesini sağlar.
+Ekranlar o anki zamana göre hangi olayların gerçekleştiğini hesaplar. Bu sayede uygulama kapalıyken de sipariş ilerler. Gelecekteki gecikmeler önceden gösterilmez, tahmini teslim tarihi ancak gecikme olayı gerçekleşince güncellenir.
 
-## Platform Farklılıklarının Çözümü
+## Platform farkları
 
-### Ses Efektleri — `expo-av`
-`expo-av` kütüphanesi, hem Web ses API'lerini (`HTMLAudioElement`/Web Audio) hem de mobil yerel ses sürücülerini (`AVAudioPlayer` / `MediaPlayer`) tek bir `Audio.Sound` arayüzü altında soyutlar. `App.tsx` içindeki `usePurchaseSound` hook'u, her satın alma anında `Audio.Sound.createAsync` ile sesi yükler ve `playAsync()` ile çalar; ses yüklenemezse (örn. tarayıcı otomatik oynatma kısıtlaması) hata sessizce yutulur ve haptic/toast geri bildirimi devreye girer.
+Metro, `.native.ts` dosyalarını Android/iOS'ta, düz `.ts` dosyalarını web'de kullanır:
 
-### Dokunsal Geri Bildirim — `expo-haptics`
-Mobilde (`Haptics.notificationAsync`, `Haptics.impactAsync`) titreşimli geri bildirim sağlanır; Web'de bu çağrılar no-op olarak davranır, böylece platforma özel `if` bloklarına gerek kalmaz.
+| Modül | Android / iOS | Web |
+| --- | --- | --- |
+| `src/ads/rewarded` | AdMob ödüllü reklam | 3 sn simülasyon |
+| `src/notifications/orderNotifications` | expo-notifications ile zamanlanmış bildirim | işlem yok |
+| Haptics | expo-haptics | atlanır |
 
-### Tasarım — `NativeWind`
-`NativeWind`, `tailwind.config.js` içinde tanımlanan Tailwind sınıflarını derleme zamanında (Babel eklentisi `nativewind/babel` aracılığıyla):
-- **Web'de** → standart CSS sınıflarına,
-- **Mobilde (iOS/Android)** → React Native `StyleSheet` nesnelerine
+Stil: NativeWind v4 (Tailwind sınıfları web'de CSS'e, native'de StyleSheet'e dönüşür).
 
-dönüştürür. Böylece `App.tsx` içindeki bileşenler tek bir `className` API'si ile yazılır ve üç platformda da tutarlı görünür.
+## CI/CD (`.github/workflows/build-deploy.yml`)
 
-### Kalıcı Depolama — `@react-native-async-storage/async-storage`
-Mobilde yerel disk tabanlı depolamayı kullanırken, Web'de aynı API'nin `localStorage` üzerine kurulu shim'i çalışır; bu sayede `persist` middleware'i platform farkı olmadan çalışır.
-
-## Veri Akışı Özeti
-
-1. Kullanıcı bir kategori seçer → `getProductsByCategory` ile ürünler filtrelenir.
-2. "Hemen Al" veya "Sepete Ekle" tetiklenir → `useStore` aksiyonları çağrılır.
-3. Satın alma tamamlanınca → bakiye düşer, DP artar, `purchaseHistory`'e kayıt eklenir, `expo-av` ile ses ve `expo-haptics` ile titreşim tetiklenir, ekranda dopamin bildirimi (`DopamineToast`) gösterilir.
-4. `persist` middleware, her state değişiminde otomatik olarak `AsyncStorage`'a yazar.
-
-## CI/CD
-
-`.github/workflows/build-deploy.yml`, her `main` push'unda:
-1. Bağımlılıkları kurar, lint ve typecheck çalıştırır.
-2. Web sürümünü `expo export --platform web` ile statik olarak derler.
-3. EAS Build (Android/iOS) tetiklemesi için `eas build` adımlarını içerir (EAS token gerektirir, `secrets.EXPO_TOKEN`).
+- **typecheck:** `tsc --noEmit`
+- **web:** `expo export --platform web` (`GH_PAGES_BASE_PATH` ile alt-yol), `gh-pages` dalına yayın. Katalog da bununla yayınlanır.
+- **android:** `expo prebuild` + `./gradlew assembleRelease`. Expo hesabı gerekmez. APK, `android-build-N` etiketiyle GitHub Releases'a yüklenir. `versionCode` = run numarası, böylece yeni sürüm eskisinin üzerine kurulur.
