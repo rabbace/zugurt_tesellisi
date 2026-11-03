@@ -1,325 +1,258 @@
 import './global.css';
-import React, { useCallback, useMemo, useRef, useState } from 'react';
+
+import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { Platform, Pressable, SafeAreaView, StatusBar, Text, View } from 'react-native';
+
+import { initAds, isSimulatedAd, showRewardedAd } from './src/ads/rewarded';
+import { useCatalogStore } from './src/catalog/catalogStore';
+import { playSuccess, tap } from './src/feedback';
+import { formatTL } from './src/format';
 import {
-  FlatList,
-  Modal,
-  Platform,
-  Pressable,
-  SafeAreaView,
-  ScrollView,
-  StatusBar,
-  Text,
-  View,
-} from 'react-native';
-import * as Haptics from 'expo-haptics';
-import { Audio } from 'expo-av';
-import {
-  getAllCategories,
-  getProductsByCategory,
-  Product,
-  ProductCategory,
-} from './src/utils/products';
-import { PurchaseRecord, useStore } from './src/store/useStore';
+  cancelOrderNotifications,
+  scheduleOrderNotifications,
+  setupNotifications,
+} from './src/notifications/orderNotifications';
+import { AccountScreen } from './src/screens/AccountScreen';
+import { CartScreen } from './src/screens/CartScreen';
+import { HomeScreen } from './src/screens/HomeScreen';
+import { OrderDetail, OrdersScreen } from './src/screens/OrdersScreen';
+import { ProductDetail } from './src/screens/ProductDetail';
+import { computeTotals, resolveCart, useStore } from './src/store/useStore';
+import { Order, Product } from './src/types';
 
-function formatCurrency(value: number): string {
-  return `₺${value.toLocaleString('tr-TR', { maximumFractionDigits: 0 })}`;
+type Tab = 'home' | 'cart' | 'orders' | 'account';
+
+const TABS: { key: Tab; label: string; icon: string }[] = [
+  { key: 'home', label: 'Anasayfa', icon: '🏠' },
+  { key: 'cart', label: 'Sepetim', icon: '🛒' },
+  { key: 'orders', label: 'Siparişlerim', icon: '📦' },
+  { key: 'account', label: 'Hesabım', icon: '👤' },
+];
+
+function useNow(intervalMs: number): number {
+  const [now, setNow] = useState(Date.now());
+  useEffect(() => {
+    const id = setInterval(() => setNow(Date.now()), intervalMs);
+    return () => clearInterval(id);
+  }, [intervalMs]);
+  return now;
 }
 
-async function safeNotificationHaptic() {
-  if (Platform.OS === 'web') return;
-  await Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
-}
-
-async function safeImpactHaptic() {
-  if (Platform.OS === 'web') return;
-  await Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-}
-
-const PURCHASE_SOUND_URI =
-  'https://actions.google.com/sounds/v1/cartoon/clang_and_wobble.ogg';
-
-function usePurchaseSound() {
-  const soundRef = useRef<Audio.Sound | null>(null);
-
-  return useCallback(async () => {
-    try {
-      if (soundRef.current) {
-        await soundRef.current.unloadAsync();
-        soundRef.current = null;
-      }
-      const { sound } = await Audio.Sound.createAsync({ uri: PURCHASE_SOUND_URI });
-      soundRef.current = sound;
-      await sound.playAsync();
-    } catch {
-      // Ses dosyası web/mobil platformda kullanılamıyorsa sessizce yutulur,
-      // dopamin geri bildirimi haptics/confetti ile zaten sağlanır.
-    }
-  }, []);
-}
-
-function ProductCard({
-  product,
-  onBuyNow,
-  onAddToCart,
-}: {
-  product: Product;
-  onBuyNow: (product: Product) => void;
-  onAddToCart: (product: Product) => void;
-}) {
+function Toast({ message }: { message: string | null }) {
+  if (!message) return null;
   return (
-    <View className="bg-zugurt-panel rounded-2xl p-4 m-2 flex-1 min-w-[160px] border border-white/5">
-      <Text className="text-4xl text-center mb-2">{product.emoji}</Text>
-      <Text className="text-white font-bold text-base" numberOfLines={2}>
-        {product.name}
-      </Text>
-      <Text className="text-gray-400 text-xs mt-1" numberOfLines={3}>
-        {product.description}
-      </Text>
-      <Text className="text-zugurt-gold font-extrabold text-lg mt-3">
-        {formatCurrency(product.price)}
-      </Text>
-      <View className="flex-row mt-3 gap-2">
-        <Pressable
-          onPress={() => onAddToCart(product)}
-          className="flex-1 bg-white/10 rounded-xl py-2 items-center active:opacity-70"
-        >
-          <Text className="text-white text-xs font-semibold">Sepete Ekle</Text>
-        </Pressable>
-        <Pressable
-          onPress={() => onBuyNow(product)}
-          className="flex-1 bg-zugurt-accent rounded-xl py-2 items-center active:opacity-70"
-        >
-          <Text className="text-white text-xs font-bold">Hemen Al</Text>
-        </Pressable>
+    <View pointerEvents="none" className="absolute bottom-24 left-4 right-4 items-center z-50">
+      <View className="bg-slate-900 rounded-2xl px-4 py-3">
+        <Text className="text-white text-sm font-semibold text-center">{message}</Text>
       </View>
-    </View>
-  );
-}
-
-function DopamineToast({ visible, dopamine }: { visible: boolean; dopamine: number }) {
-  if (!visible) return null;
-  return (
-    <View className="absolute top-16 self-center bg-zugurt-success px-5 py-3 rounded-full shadow-lg z-50">
-      <Text className="text-white font-bold">+{dopamine} DP 🧠✨ Teselli Bulundu!</Text>
     </View>
   );
 }
 
 export default function App() {
-  const balance = useStore((state) => state.balance);
-  const cart = useStore((state) => state.cart);
-  const dopaminePoints = useStore((state) => state.dopaminePoints);
-  const purchaseHistory = useStore((state) => state.purchaseHistory);
-  const addToCart = useStore((state) => state.addToCart);
-  const removeFromCart = useStore((state) => state.removeFromCart);
-  const getCartTotal = useStore((state) => state.getCartTotal);
-  const checkout = useStore((state) => state.checkout);
-  const buyNow = useStore((state) => state.buyNow);
-  const resetBalance = useStore((state) => state.resetBalance);
+  const catalog = useCatalogStore((s) => s.catalog);
+  const catalogSource = useCatalogStore((s) => s.source);
+  const lastFetchedAt = useCatalogStore((s) => s.lastFetchedAt);
+  const refreshCatalog = useCatalogStore((s) => s.refresh);
 
-  const categories = useMemo(() => getAllCategories(), []);
-  const [activeCategory, setActiveCategory] = useState<ProductCategory>(categories[0]);
-  const [cartOpen, setCartOpen] = useState(false);
-  const [historyOpen, setHistoryOpen] = useState(false);
-  const [toast, setToast] = useState<{ visible: boolean; dopamine: number }>({
-    visible: false,
-    dopamine: 0,
-  });
+  const store = useStore();
+  const now = useNow(5000);
 
-  const playPurchaseSound = usePurchaseSound();
-  const products = useMemo(() => getProductsByCategory(activeCategory), [activeCategory]);
+  const [tab, setTab] = useState<Tab>('home');
+  const [openProduct, setOpenProduct] = useState<Product | null>(null);
+  const [openOrderId, setOpenOrderId] = useState<string | null>(null);
+  const [toast, setToast] = useState<string | null>(null);
+  const [adLoading, setAdLoading] = useState(false);
+  const toastTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
 
-  const triggerDopamineFeedback = useCallback(
-    async (dopamine: number) => {
-      await safeNotificationHaptic();
-      await playPurchaseSound();
-      setToast({ visible: true, dopamine });
-      setTimeout(() => setToast({ visible: false, dopamine: 0 }), 1800);
+  const { initialize } = store;
+  const startingCredit = catalog.economy.startingCredit;
+
+  useEffect(() => {
+    const init = () => initialize(startingCredit);
+    if (useStore.persist.hasHydrated()) init();
+    return useStore.persist.onFinishHydration(init);
+  }, [initialize, startingCredit]);
+
+  useEffect(() => {
+    refreshCatalog();
+    setupNotifications();
+    initAds();
+  }, [refreshCatalog]);
+
+  const showToast = useCallback((message: string) => {
+    if (toastTimer.current) clearTimeout(toastTimer.current);
+    setToast(message);
+    toastTimer.current = setTimeout(() => setToast(null), 2600);
+  }, []);
+
+  const cartItems = useMemo(() => resolveCart(store.cart, catalog.products), [store.cart, catalog.products]);
+  const totals = useMemo(() => computeTotals(cartItems, catalog.economy), [cartItems, catalog.economy]);
+  const cartCount = cartItems.reduce((s, i) => s + i.quantity, 0);
+  const openOrder = store.orders.find((o) => o.id === openOrderId) ?? null;
+
+  const adCooldownLeft = store.lastAdAt
+    ? Math.max(0, Math.ceil((store.lastAdAt + catalog.economy.adCooldownSeconds * 1000 - now) / 1000))
+    : 0;
+
+  const handleAdd = useCallback(
+    (product: Product, quantity = 1) => {
+      store.addToCart(product, quantity);
+      tap();
+      showToast(`${product.brand} ${product.title} sepete eklendi`);
     },
-    [playPurchaseSound]
+    [store, showToast]
   );
 
   const handleBuyNow = useCallback(
-    (product: Product) => {
-      if (balance < product.price) return;
-      const record: PurchaseRecord = buyNow(product);
-      triggerDopamineFeedback(record.dopamineGained);
+    (product: Product, quantity: number) => {
+      store.addToCart(product, quantity);
+      setOpenProduct(null);
+      setTab('cart');
     },
-    [balance, buyNow, triggerDopamineFeedback]
-  );
-
-  const handleAddToCart = useCallback(
-    (product: Product) => {
-      addToCart(product);
-      safeImpactHaptic();
-    },
-    [addToCart]
+    [store]
   );
 
   const handleCheckout = useCallback(async () => {
-    const records = checkout();
-    if (records.length === 0) return;
-    const totalDopamine = records.reduce((sum, r) => sum + r.dopamineGained, 0);
-    setCartOpen(false);
-    await triggerDopamineFeedback(totalDopamine);
-  }, [checkout, triggerDopamineFeedback]);
+    const result = store.placeOrder(cartItems, catalog.economy);
+    if (!result.ok) {
+      showToast(result.reason);
+      return;
+    }
+    setTab('orders');
+    showToast(`Siparişin alındı! ${formatTL(result.order.total)} sanal kredinden düşüldü 🎉`);
+    playSuccess();
+    const ids = await scheduleOrderNotifications(result.order);
+    if (ids.length) store.attachNotifications(result.order.id, ids);
+  }, [store, cartItems, catalog.economy, showToast]);
 
-  const cartTotal = getCartTotal();
+  const handleCancel = useCallback(
+    (order: Order) => {
+      const cancelled = store.cancelOrder(order.id);
+      if (!cancelled) {
+        showToast('Bu sipariş artık iptal edilemez, kargoya verildi.');
+        return;
+      }
+      cancelOrderNotifications(order.notificationIds);
+      showToast(`Sipariş iptal edildi, ${formatTL(order.total)} iade edildi`);
+    },
+    [store, showToast]
+  );
+
+  const handleWatchAd = useCallback(async () => {
+    if (adLoading || adCooldownLeft > 0) return;
+    setAdLoading(true);
+    const earned = await showRewardedAd();
+    setAdLoading(false);
+    if (earned) {
+      store.rewardAd(catalog.economy.adReward);
+      playSuccess();
+      showToast(`+${formatTL(catalog.economy.adReward)} sanal kredi kazandın!`);
+    } else {
+      showToast('Reklam şu an yüklenemedi veya yarıda kapatıldı. Biraz sonra tekrar dene.');
+    }
+  }, [adLoading, adCooldownLeft, store, catalog.economy.adReward, showToast]);
+
+  const handleReset = useCallback(() => {
+    store.orders.forEach((o) => cancelOrderNotifications(o.notificationIds));
+    store.resetAll(catalog.economy.startingCredit);
+    setTab('home');
+    showToast('Hesap sıfırlandı, krediler yenilendi');
+  }, [store, catalog.economy.startingCredit, showToast]);
+
+  const handleRefreshCatalog = useCallback(async () => {
+    const ok = await refreshCatalog();
+    showToast(ok ? 'Fiyatlar güncellendi' : 'Fiyatlar güncellenemedi, internet bağlantını kontrol et');
+  }, [refreshCatalog, showToast]);
 
   return (
-    <SafeAreaView className="flex-1 bg-zugurt-dark">
-      <StatusBar barStyle="light-content" />
-      <DopamineToast visible={toast.visible} dopamine={toast.dopamine} />
+    <SafeAreaView className="flex-1 bg-page" style={{ paddingTop: Platform.OS === 'android' ? StatusBar.currentHeight : 0 }}>
+      <StatusBar barStyle="dark-content" backgroundColor="#FFFFFF" />
 
-      <View className="px-4 pt-2 pb-3 border-b border-white/10">
-        <Text className="text-zugurt-gold text-2xl font-extrabold">Züğürt Tesellisi</Text>
-        <View className="flex-row justify-between mt-2">
-          <View>
-            <Text className="text-gray-400 text-xs">Bakiye</Text>
-            <Text className="text-white text-lg font-bold">{formatCurrency(balance)}</Text>
-          </View>
-          <View>
-            <Text className="text-gray-400 text-xs">Dopamine Points</Text>
-            <Text className="text-zugurt-accent text-lg font-bold">🧠 {dopaminePoints} DP</Text>
-          </View>
-        </View>
-        <View className="flex-row mt-3 gap-2">
-          <Pressable
-            onPress={() => setCartOpen(true)}
-            className="bg-white/10 rounded-xl px-3 py-2 flex-1 items-center active:opacity-70"
-          >
-            <Text className="text-white text-xs font-semibold">🛒 Sepet ({cart.length})</Text>
-          </Pressable>
-          <Pressable
-            onPress={() => setHistoryOpen(true)}
-            className="bg-white/10 rounded-xl px-3 py-2 flex-1 items-center active:opacity-70"
-          >
-            <Text className="text-white text-xs font-semibold">📊 Geçmiş</Text>
-          </Pressable>
-          <Pressable
-            onPress={resetBalance}
-            className="bg-zugurt-gold rounded-xl px-3 py-2 flex-1 items-center active:opacity-70"
-          >
-            <Text className="text-zugurt-dark text-xs font-bold">🔁 Yeniden Zengin Ol</Text>
-          </Pressable>
-        </View>
+      <View className="flex-row items-center justify-between px-4 py-3 bg-white border-b border-slate-100">
+        <Text className="text-brand text-xl font-extrabold">Züğürt Tesellisi</Text>
+        <Pressable onPress={() => setTab('account')} className="bg-brand-light rounded-full px-3 py-1.5 active:opacity-70">
+          <Text className="text-brand font-bold text-xs">💰 {formatTL(store.credit)}</Text>
+        </Pressable>
       </View>
 
-      <ScrollView
-        horizontal
-        showsHorizontalScrollIndicator={false}
-        className="px-2 py-3"
-        contentContainerStyle={{ paddingHorizontal: 8 }}
-      >
-        {categories.map((category) => (
-          <Pressable
-            key={category}
-            onPress={() => setActiveCategory(category)}
-            className={`px-4 py-2 rounded-full mr-2 ${
-              activeCategory === category ? 'bg-zugurt-accent' : 'bg-white/10'
-            }`}
-          >
-            <Text
-              className={`text-xs font-semibold ${
-                activeCategory === category ? 'text-white' : 'text-gray-300'
-              }`}
-            >
-              {category}
-            </Text>
-          </Pressable>
-        ))}
-      </ScrollView>
-
-      <FlatList
-        data={products}
-        keyExtractor={(item) => item.id}
-        numColumns={2}
-        contentContainerStyle={{ paddingHorizontal: 8, paddingBottom: 24 }}
-        renderItem={({ item }) => (
-          <ProductCard product={item} onBuyNow={handleBuyNow} onAddToCart={handleAddToCart} />
+      <View className="flex-1">
+        {tab === 'home' && <HomeScreen catalog={catalog} onOpen={setOpenProduct} onAdd={(p) => handleAdd(p)} />}
+        {tab === 'cart' && (
+          <CartScreen
+            items={cartItems}
+            totals={totals}
+            economy={catalog.economy}
+            credit={store.credit}
+            address={store.address}
+            onQuantity={store.setQuantity}
+            onRemove={store.removeFromCart}
+            onCheckout={handleCheckout}
+            onEarnCredit={() => setTab('account')}
+          />
         )}
+        {tab === 'orders' && <OrdersScreen orders={store.orders} now={now} onOpen={(o) => setOpenOrderId(o.id)} />}
+        {tab === 'account' && (
+          <AccountScreen
+            credit={store.credit}
+            catalog={catalog}
+            catalogSource={catalogSource}
+            dopaminePoints={store.dopaminePoints}
+            totalSpent={store.totalSpent}
+            orderCount={store.orders.length}
+            adsWatched={store.adsWatched}
+            adCooldownLeft={adCooldownLeft}
+            adLoading={adLoading}
+            isSimulatedAd={isSimulatedAd}
+            fastMode={store.fastMode}
+            address={store.address}
+            lastFetchedAt={lastFetchedAt}
+            onWatchAd={handleWatchAd}
+            onFastMode={store.setFastMode}
+            onAddress={(a) => {
+              store.setAddress(a);
+              showToast('Adres kaydedildi');
+            }}
+            onRefreshCatalog={handleRefreshCatalog}
+            onReset={handleReset}
+          />
+        )}
+      </View>
+
+      <View className="flex-row bg-white border-t border-slate-100 pb-2">
+        {TABS.map((t) => {
+          const active = tab === t.key;
+          return (
+            <Pressable key={t.key} onPress={() => setTab(t.key)} className="flex-1 items-center pt-2 active:opacity-60">
+              <View>
+                <Text className="text-xl text-center">{t.icon}</Text>
+                {t.key === 'cart' && cartCount > 0 && (
+                  <View className="absolute -top-1 -right-3 bg-red-600 rounded-full min-w-[18px] h-[18px] items-center justify-center px-1">
+                    <Text className="text-white text-[10px] font-bold">{cartCount}</Text>
+                  </View>
+                )}
+              </View>
+              <Text className={`text-[11px] mt-0.5 ${active ? 'text-brand font-bold' : 'text-slate-500'}`}>{t.label}</Text>
+            </Pressable>
+          );
+        })}
+      </View>
+
+      <Toast message={toast} />
+
+      <ProductDetail
+        product={openProduct}
+        category={catalog.categories.find((c) => c.id === openProduct?.categoryId)}
+        economy={catalog.economy}
+        onClose={() => setOpenProduct(null)}
+        onAdd={(p, q) => {
+          handleAdd(p, q);
+          setOpenProduct(null);
+        }}
+        onBuyNow={handleBuyNow}
       />
 
-      <Modal visible={cartOpen} animationType="slide" transparent>
-        <View className="flex-1 bg-black/60 justify-end">
-          <View className="bg-zugurt-panel rounded-t-3xl p-4 max-h-[80%]">
-            <Text className="text-white text-lg font-bold mb-3">Sepetiniz</Text>
-            <ScrollView>
-              {cart.length === 0 && (
-                <Text className="text-gray-400 text-center py-8">Sepetiniz boş.</Text>
-              )}
-              {cart.map((item) => (
-                <View
-                  key={item.product.id}
-                  className="flex-row items-center justify-between border-b border-white/10 py-3"
-                >
-                  <Text className="text-2xl mr-2">{item.product.emoji}</Text>
-                  <View className="flex-1">
-                    <Text className="text-white font-semibold" numberOfLines={1}>
-                      {item.product.name}
-                    </Text>
-                    <Text className="text-gray-400 text-xs">
-                      {item.quantity} x {formatCurrency(item.product.price)}
-                    </Text>
-                  </View>
-                  <Pressable onPress={() => removeFromCart(item.product.id)} className="px-2">
-                    <Text className="text-zugurt-accent font-bold">Kaldır</Text>
-                  </Pressable>
-                </View>
-              ))}
-            </ScrollView>
-            <View className="flex-row justify-between items-center mt-4">
-              <Text className="text-white font-bold text-base">
-                Toplam: {formatCurrency(cartTotal)}
-              </Text>
-              <Pressable
-                onPress={handleCheckout}
-                disabled={cart.length === 0 || cartTotal > balance}
-                className="bg-zugurt-success rounded-xl px-5 py-3 active:opacity-70 disabled:opacity-40"
-              >
-                <Text className="text-white font-bold">Satın Al</Text>
-              </Pressable>
-            </View>
-            <Pressable onPress={() => setCartOpen(false)} className="mt-4 items-center">
-              <Text className="text-gray-400">Kapat</Text>
-            </Pressable>
-          </View>
-        </View>
-      </Modal>
-
-      <Modal visible={historyOpen} animationType="slide" transparent>
-        <View className="flex-1 bg-black/60 justify-end">
-          <View className="bg-zugurt-panel rounded-t-3xl p-4 max-h-[80%]">
-            <Text className="text-white text-lg font-bold mb-3">Harcama Geçmişi</Text>
-            <ScrollView>
-              {purchaseHistory.length === 0 && (
-                <Text className="text-gray-400 text-center py-8">
-                  Henüz teselli bulunmadı. Hadi alışverişe başla!
-                </Text>
-              )}
-              {purchaseHistory.map((record) => (
-                <View
-                  key={record.id}
-                  className="flex-row items-center justify-between border-b border-white/10 py-3"
-                >
-                  <Text className="text-2xl mr-2">{record.emoji}</Text>
-                  <View className="flex-1">
-                    <Text className="text-white font-semibold" numberOfLines={1}>
-                      {record.productName}
-                    </Text>
-                    <Text className="text-gray-400 text-xs">
-                      {record.quantity} x {formatCurrency(record.price)} · +{record.dopamineGained} DP
-                    </Text>
-                  </View>
-                </View>
-              ))}
-            </ScrollView>
-            <Pressable onPress={() => setHistoryOpen(false)} className="mt-4 items-center">
-              <Text className="text-gray-400">Kapat</Text>
-            </Pressable>
-          </View>
-        </View>
-      </Modal>
+      <OrderDetail order={openOrder} now={now} onClose={() => setOpenOrderId(null)} onCancel={handleCancel} />
     </SafeAreaView>
   );
 }

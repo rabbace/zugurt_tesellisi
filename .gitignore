@@ -11,3 +11,5 @@ npm-debug.*
 *.orig.*
 .DS_Store
 .env*.local
+/android/
+/ios/

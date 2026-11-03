@@ -1,167 +1,196 @@
+import AsyncStorage from '@react-native-async-storage/async-storage';
 import { create } from 'zustand';
 import { createJSONStorage, persist } from 'zustand/middleware';
-import AsyncStorage from '@react-native-async-storage/async-storage';
-import { Product } from '../utils/products';
 
-export const INITIAL_BALANCE = 9_999_999_999;
+import { buildOrder, canCancel } from '../orders/simulate';
+import { CartItem, Economy, Order, Product } from '../types';
 
-export interface CartItem {
-  product: Product;
-  quantity: number;
+export const DEFAULT_ADDRESS = 'Teselli Mah. Hayal Sok. No: 7 D: 3, Kadıköy / İstanbul';
+
+export interface CartTotals {
+  subtotal: number;
+  shippingFee: number;
+  total: number;
+  remainingForFreeShipping: number;
 }
 
-export interface PurchaseRecord {
-  id: string;
-  productId: string;
-  productName: string;
-  emoji: string;
-  price: number;
-  quantity: number;
-  dopamineGained: number;
-  timestamp: number;
+export function computeTotals(items: CartItem[], economy: Economy): CartTotals {
+  const subtotal = items.reduce((sum, i) => sum + i.product.price * i.quantity, 0);
+  const allFree = items.length > 0 && items.every((i) => i.product.freeShipping);
+  const qualifies = allFree || subtotal >= economy.freeShippingThreshold;
+  const shippingFee = items.length === 0 || qualifies ? 0 : economy.shippingFee;
+  return {
+    subtotal,
+    shippingFee,
+    total: subtotal + shippingFee,
+    remainingForFreeShipping: qualifies ? 0 : economy.freeShippingThreshold - subtotal,
+  };
 }
+
+export function resolveCart(cart: CartItem[], products: Product[]): CartItem[] {
+  return cart.map((item) => ({
+    ...item,
+    product: products.find((p) => p.id === item.product.id) ?? item.product,
+  }));
+}
+
+function dopamineFor(total: number): number {
+  return Math.round(Math.log10(total + 10) * 10);
+}
+
+export type PlaceOrderResult = { ok: true; order: Order } | { ok: false; reason: string };
 
 interface StoreState {
-  balance: number;
+  initialized: boolean;
+  credit: number;
   cart: CartItem[];
+  orders: Order[];
   dopaminePoints: number;
-  purchaseHistory: PurchaseRecord[];
+  totalSpent: number;
+  adsWatched: number;
+  lastAdAt: number | null;
+  fastMode: boolean;
+  address: string;
 
+  initialize: (startingCredit: number) => void;
   addToCart: (product: Product, quantity?: number) => void;
+  setQuantity: (productId: string, quantity: number) => void;
   removeFromCart: (productId: string) => void;
-  updateCartQuantity: (productId: string, quantity: number) => void;
-  clearCart: () => void;
-  getCartTotal: () => number;
-
-  checkout: () => PurchaseRecord[];
-  buyNow: (product: Product) => PurchaseRecord;
-
-  resetBalance: () => void;
+  placeOrder: (items: CartItem[], economy: Economy) => PlaceOrderResult;
+  attachNotifications: (orderId: string, ids: string[]) => void;
+  cancelOrder: (orderId: string) => Order | null;
+  rewardAd: (amount: number) => void;
+  setFastMode: (value: boolean) => void;
+  setAddress: (value: string) => void;
+  resetAll: (startingCredit: number) => void;
 }
 
-function calculateDopamine(price: number, multiplier: number, quantity: number): number {
-  const baseDopamine = Math.log10(price + 10) * 10;
-  return Math.round(baseDopamine * multiplier * quantity);
-}
+const initialData = {
+  initialized: false,
+  credit: 0,
+  cart: [] as CartItem[],
+  orders: [] as Order[],
+  dopaminePoints: 0,
+  totalSpent: 0,
+  adsWatched: 0,
+  lastAdAt: null as number | null,
+  fastMode: true,
+  address: DEFAULT_ADDRESS,
+};
 
 export const useStore = create<StoreState>()(
   persist(
     (set, get) => ({
-      balance: INITIAL_BALANCE,
-      cart: [],
-      dopaminePoints: 0,
-      purchaseHistory: [],
+      ...initialData,
 
-      addToCart: (product, quantity = 1) => {
+      initialize: (startingCredit) => {
+        if (get().initialized) return;
+        set({ initialized: true, credit: startingCredit });
+      },
+
+      addToCart: (product, quantity = 1) =>
         set((state) => {
-          const existing = state.cart.find((item) => item.product.id === product.id);
+          const existing = state.cart.find((i) => i.product.id === product.id);
           if (existing) {
             return {
-              cart: state.cart.map((item) =>
-                item.product.id === product.id
-                  ? { ...item, quantity: item.quantity + quantity }
-                  : item
+              cart: state.cart.map((i) =>
+                i.product.id === product.id
+                  ? { ...i, quantity: Math.min(i.quantity + quantity, product.stock) }
+                  : i
               ),
             };
           }
-          return { cart: [...state.cart, { product, quantity }] };
-        });
-      },
+          return { cart: [...state.cart, { product, quantity: Math.min(quantity, product.stock) }] };
+        }),
 
-      removeFromCart: (productId) => {
+      setQuantity: (productId, quantity) =>
         set((state) => ({
-          cart: state.cart.filter((item) => item.product.id !== productId),
-        }));
-      },
+          cart:
+            quantity <= 0
+              ? state.cart.filter((i) => i.product.id !== productId)
+              : state.cart.map((i) =>
+                  i.product.id === productId
+                    ? { ...i, quantity: Math.min(quantity, i.product.stock) }
+                    : i
+                ),
+        })),
 
-      updateCartQuantity: (productId, quantity) => {
-        if (quantity <= 0) {
-          get().removeFromCart(productId);
-          return;
+      removeFromCart: (productId) =>
+        set((state) => ({ cart: state.cart.filter((i) => i.product.id !== productId) })),
+
+      placeOrder: (items, economy) => {
+        if (items.length === 0) return { ok: false, reason: 'Sepetin boş.' };
+        const totals = computeTotals(items, economy);
+        const { credit, address, fastMode } = get();
+        if (totals.total > credit) {
+          return { ok: false, reason: 'Sanal kredin yetersiz. Reklam izleyerek kredi kazanabilirsin.' };
         }
-        set((state) => ({
-          cart: state.cart.map((item) =>
-            item.product.id === productId ? { ...item, quantity } : item
-          ),
-        }));
-      },
-
-      clearCart: () => set({ cart: [] }),
-
-      getCartTotal: () => {
-        return get().cart.reduce(
-          (total, item) => total + item.product.price * item.quantity,
-          0
-        );
-      },
-
-      checkout: () => {
-        const { cart } = get();
-        const records: PurchaseRecord[] = cart.map((item) => {
-          const dopamineGained = calculateDopamine(
-            item.product.price,
-            item.product.dopamineMultiplier,
-            item.quantity
-          );
-          return {
-            id: `${item.product.id}-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`,
-            productId: item.product.id,
-            productName: item.product.name,
-            emoji: item.product.emoji,
-            price: item.product.price,
-            quantity: item.quantity,
-            dopamineGained,
-            timestamp: Date.now(),
-          };
+        const order = buildOrder({
+          items,
+          subtotal: totals.subtotal,
+          shippingFee: totals.shippingFee,
+          address,
+          fastMode,
         });
-
-        const totalSpent = cart.reduce(
-          (sum, item) => sum + item.product.price * item.quantity,
-          0
-        );
-        const totalDopamine = records.reduce((sum, record) => sum + record.dopamineGained, 0);
-
         set((state) => ({
-          balance: state.balance - totalSpent,
-          dopaminePoints: state.dopaminePoints + totalDopamine,
-          purchaseHistory: [...records, ...state.purchaseHistory],
-          cart: [],
+          credit: state.credit - order.total,
+          totalSpent: state.totalSpent + order.total,
+          dopaminePoints: state.dopaminePoints + dopamineFor(order.total),
+          orders: [order, ...state.orders],
+          cart: state.cart.filter((c) => !items.some((i) => i.product.id === c.product.id)),
         }));
-
-        return records;
+        return { ok: true, order };
       },
 
-      buyNow: (product) => {
-        const dopamineGained = calculateDopamine(
-          product.price,
-          product.dopamineMultiplier,
-          1
-        );
-        const record: PurchaseRecord = {
-          id: `${product.id}-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`,
-          productId: product.id,
-          productName: product.name,
-          emoji: product.emoji,
-          price: product.price,
-          quantity: 1,
-          dopamineGained,
-          timestamp: Date.now(),
-        };
-
+      attachNotifications: (orderId, ids) =>
         set((state) => ({
-          balance: state.balance - product.price,
-          dopaminePoints: state.dopaminePoints + dopamineGained,
-          purchaseHistory: [record, ...state.purchaseHistory],
-        }));
+          orders: state.orders.map((o) => (o.id === orderId ? { ...o, notificationIds: ids } : o)),
+        })),
 
-        return record;
+      cancelOrder: (orderId) => {
+        const order = get().orders.find((o) => o.id === orderId);
+        const now = Date.now();
+        if (!order || !canCancel(order, now)) return null;
+        const cancelled: Order = { ...order, cancelledAt: now };
+        set((state) => ({
+          credit: state.credit + order.total,
+          totalSpent: state.totalSpent - order.total,
+          orders: state.orders.map((o) => (o.id === orderId ? cancelled : o)),
+        }));
+        return cancelled;
       },
 
-      resetBalance: () => set({ balance: INITIAL_BALANCE }),
+      rewardAd: (amount) =>
+        set((state) => ({
+          credit: state.credit + amount,
+          adsWatched: state.adsWatched + 1,
+          lastAdAt: Date.now(),
+        })),
+
+      setFastMode: (value) => set({ fastMode: value }),
+
+      setAddress: (value) => set({ address: value }),
+
+      resetAll: (startingCredit) =>
+        set({ ...initialData, initialized: true, credit: startingCredit }),
     }),
     {
       name: 'zugurt-tesellisi-storage',
+      version: 2,
       storage: createJSONStorage(() => AsyncStorage),
+      migrate: () => ({ ...initialData }) as unknown as StoreState,
+      partialize: (state) => ({
+        initialized: state.initialized,
+        credit: state.credit,
+        cart: state.cart,
+        orders: state.orders,
+        dopaminePoints: state.dopaminePoints,
+        totalSpent: state.totalSpent,
+        adsWatched: state.adsWatched,
+        lastAdAt: state.lastAdAt,
+        fastMode: state.fastMode,
+        address: state.address,
+      }),
     }
   )
 );

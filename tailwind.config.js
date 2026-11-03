@@ -4,13 +4,13 @@ module.exports = {
   theme: {
     extend: {
       colors: {
-        zugurt: {
-          gold: '#FFD700',
-          dark: '#0F0F1A',
-          panel: '#1C1B29',
-          accent: '#FF5DA2',
-          success: '#22C55E',
+        brand: {
+          DEFAULT: '#6D28D9',
+          dark: '#4C1D95',
+          light: '#EDE9FE',
         },
+        gold: '#F59E0B',
+        page: '#F4F4F6',
       },
     },
   },
