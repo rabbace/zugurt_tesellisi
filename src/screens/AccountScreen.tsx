@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
-import { Pressable, ScrollView, Switch, Text, TextInput, View } from 'react-native';
+import { Pressable, ScrollView, Switch, Text, View } from 'react-native';
 
-import { PrimaryButton } from '../components/ui';
+import { MenuRow, PrimaryButton } from '../components/ui';
 import { formatDateTime, formatTL } from '../format';
 import { ThemeMode } from '../theme';
 import { Catalog } from '../types';
@@ -26,12 +26,19 @@ export function AccountScreen({
   fastMode,
   theme,
   switchOffColor,
-  address,
+  addressCount,
+  couponCount,
+  unreadCount,
+  reviewCount,
   lastFetchedAt,
   onWatchAd,
   onFastMode,
   onTheme,
-  onAddress,
+  onOpenAddresses,
+  onOpenCoupons,
+  onOpenInbox,
+  onOpenOrders,
+  onOpenFavorites,
   onRefreshCatalog,
   onReset,
 }: {
@@ -48,16 +55,22 @@ export function AccountScreen({
   fastMode: boolean;
   theme: ThemeMode;
   switchOffColor: string;
-  address: string;
+  addressCount: number;
+  couponCount: number;
+  unreadCount: number;
+  reviewCount: number;
   lastFetchedAt: number | null;
   onWatchAd: () => void;
   onFastMode: (value: boolean) => void;
   onTheme: (value: ThemeMode) => void;
-  onAddress: (value: string) => void;
+  onOpenAddresses: () => void;
+  onOpenCoupons: () => void;
+  onOpenInbox: () => void;
+  onOpenOrders: () => void;
+  onOpenFavorites: () => void;
   onRefreshCatalog: () => void;
   onReset: () => void;
 }) {
-  const [draftAddress, setDraftAddress] = useState(address);
   const [confirmReset, setConfirmReset] = useState(false);
 
   const adLabel = adLoading
@@ -94,10 +107,23 @@ export function AccountScreen({
           <View key={s.label} className="w-1/2 p-1">
             <View className="bg-card rounded-2xl p-3">
               <Text className="text-muted text-xs">{s.label}</Text>
-              <Text className="text-ink font-extrabold text-base mt-1" numberOfLines={1}>{s.value}</Text>
+              <Text className="text-ink text-base font-extrabold mt-1" numberOfLines={1}>{s.value}</Text>
             </View>
           </View>
         ))}
+      </View>
+
+      <View className="bg-card rounded-2xl px-4 mt-2">
+        <MenuRow icon="📦" label="Siparişlerim" detail={orderCount ? `${orderCount}` : undefined} onPress={onOpenOrders} />
+        <MenuRow icon="❤️" label="Favorilerim" onPress={onOpenFavorites} />
+        <MenuRow icon="🎟️" label="Kuponlarım" detail={couponCount ? `${couponCount} kullanılabilir` : undefined} onPress={onOpenCoupons} />
+        <MenuRow icon="📍" label="Adreslerim" detail={`${addressCount} adres`} onPress={onOpenAddresses} />
+        <MenuRow icon="🔔" label="Bildirimler" detail={unreadCount ? `${unreadCount} yeni` : undefined} onPress={onOpenInbox} />
+        <View className="flex-row items-center py-3.5">
+          <Text className="text-xl w-9">✍️</Text>
+          <Text className="text-ink text-base flex-1">Değerlendirmelerim</Text>
+          <Text className="text-muted text-sm">{reviewCount} yorum</Text>
+        </View>
       </View>
 
       <View className="bg-card rounded-2xl p-4 mt-2">
@@ -125,21 +151,6 @@ export function AccountScreen({
           </View>
           <Switch value={fastMode} onValueChange={onFastMode} trackColor={{ true: '#6D28D9', false: switchOffColor }} thumbColor="#FFFFFF" />
         </View>
-      </View>
-
-      <View className="bg-card rounded-2xl p-4 mt-2">
-        <Text className="text-ink text-base font-bold mb-2">📍 Teslimat adresi</Text>
-        <TextInput
-          value={draftAddress}
-          onChangeText={setDraftAddress}
-          multiline
-          className="border border-line rounded-xl px-3 py-2 text-ink text-sm"
-        />
-        {draftAddress.trim() !== address && draftAddress.trim().length > 0 && (
-          <View className="mt-2">
-            <PrimaryButton label="Adresi kaydet" variant="outline" onPress={() => onAddress(draftAddress.trim())} />
-          </View>
-        )}
       </View>
 
       <View className="bg-card rounded-2xl p-4 mt-2">

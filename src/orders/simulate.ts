@@ -1,5 +1,5 @@
 import { formatDateTime, formatDay } from '../format';
-import { CartItem, Order, OrderEvent, OrderStage } from '../types';
+import { CartItem, Order, OrderEvent, OrderStage, ReturnEvent, ReturnInfo, ReturnStage } from '../types';
 
 export const REAL_DAY_MS = 24 * 60 * 60 * 1000;
 export const FAST_DAY_MS = 2 * 60 * 1000;
@@ -44,11 +44,14 @@ export function buildOrder(params: {
   items: CartItem[];
   subtotal: number;
   shippingFee: number;
+  discount: number;
+  couponCode: string | null;
   address: string;
+  addressTitle: string;
   fastMode: boolean;
   now?: number;
 }): Order {
-  const { items, subtotal, shippingFee, address, fastMode } = params;
+  const { items, subtotal, shippingFee, discount, couponCode, address, addressTitle, fastMode } = params;
   const t0 = params.now ?? Date.now();
   const day = fastMode ? FAST_DAY_MS : REAL_DAY_MS;
   const hour = day / 24;
@@ -106,15 +109,21 @@ export function buildOrder(params: {
     items,
     subtotal,
     shippingFee,
-    total: subtotal + shippingFee,
+    discount,
+    couponCode,
+    total: Math.round((subtotal + shippingFee - discount) * 100) / 100,
     createdAt: t0,
+    dayMs: day,
     address,
+    addressTitle,
     cargoCompany,
     trackingNumber: tracking,
     events,
     initialEstimate,
     cancelledAt: null,
     notificationIds: [],
+    notifiedEventCount: 1,
+    returnInfo: null,
   };
 }
 
@@ -169,3 +178,56 @@ export const STAGE_COLORS: Record<OrderStage, string> = {
   delivered: 'bg-emerald-600',
   cancelled: 'bg-slate-400',
 };
+
+export const RETURN_REASONS = [
+  'Vazgeçtim',
+  'Beklediğim gibi değil',
+  'Ürün hasarlı geldi',
+  'Yanlış ürün gönderildi',
+  'Daha uygun fiyat buldum',
+];
+
+export function deliveredAt(order: Order): number | null {
+  const last = order.events[order.events.length - 1];
+  return last?.stage === 'delivered' ? last.at : null;
+}
+
+export function returnDeadline(order: Order, returnDays: number): number | null {
+  const at = deliveredAt(order);
+  return at === null ? null : at + returnDays * (order.dayMs || FAST_DAY_MS);
+}
+
+export function canReturn(order: Order, now: number, returnDays: number): boolean {
+  const deadline = returnDeadline(order, returnDays);
+  return (
+    order.returnInfo === null &&
+    order.cancelledAt === null &&
+    currentStage(order, now) === 'delivered' &&
+    deadline !== null &&
+    now < deadline
+  );
+}
+
+export function buildReturn(order: Order, reason: string, now: number): ReturnInfo {
+  const day = order.dayMs || FAST_DAY_MS;
+  const hour = day / 24;
+  const code = Math.floor(100000 + Math.random() * 900000).toString();
+  const events: ReturnEvent[] = [];
+  const add = (stage: ReturnStage, at: number, title: string, detail: string) =>
+    events.push({ stage, at: Math.round(at), title, detail });
+  add('requested', now, 'İade talebin alındı', `Sebep: ${reason}`);
+  add('code_created', now + randomBetween(0.2, 0.6) * hour, 'İade kargo kodu oluşturuldu', `${order.cargoCompany} iade kodu: ${code}. Kargo ücreti satıcıya ait.`);
+  const pickedAt = now + randomBetween(4, 10) * hour;
+  add('picked_up', pickedAt, 'Ürün kargoya verildi', 'Kurye iade paketini teslim aldı.');
+  const receivedAt = pickedAt + randomBetween(1, 2) * day;
+  add('received', receivedAt, 'Ürün satıcıya ulaştı', 'Satıcı ürünü inceliyor.');
+  add('refunded', receivedAt + randomBetween(3, 8) * hour, 'İade onaylandı', `${order.total.toLocaleString('tr-TR')} TL sanal kredine iade edildi.`);
+  return { requestedAt: now, reason, events, refundedAt: null };
+}
+
+export function returnStage(info: ReturnInfo, now: number): ReturnEvent {
+  const reached = info.events.filter((e) => e.at <= now);
+  return reached[reached.length - 1] ?? info.events[0];
+}
+
+export const NOTIFY_STAGES: OrderStage[] = ['shipped', 'delayed', 'out_for_delivery', 'delivery_failed', 'delivered'];

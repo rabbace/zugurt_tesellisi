@@ -1,7 +1,21 @@
 {
-  "version": 2,
+  "version": 3,
   "updatedAt": "2026-11-03",
-  "economy": {"startingCredit": 150000, "adReward": 30000, "adCooldownSeconds": 30, "freeShippingThreshold": 1000, "shippingFee": 99.99},
+  "economy": {"startingCredit": 150000, "adReward": 30000, "adCooldownSeconds": 30, "freeShippingThreshold": 1000, "shippingFee": 99.99, "returnDays": 14},
+  "campaigns": [
+    {"id": "kasim-firsatlari", "title": "Kasım Fırsatları", "subtitle": "Elektronikte ekstra %8 indirim", "emoji": "🍂", "color": "#6D28D9", "startsAt": "2026-11-01T00:00:00+03:00", "endsAt": "2026-11-23T00:00:00+03:00", "discountPercent": 8, "categoryIds": ["telefon", "bilgisayar", "tv", "saat"]},
+    {"id": "market-firsatlari", "title": "Market Fırsatları", "subtitle": "Market, bebek ve pet ürünlerinde %12", "emoji": "🛒", "color": "#059669", "startsAt": "2026-11-02T00:00:00+03:00", "endsAt": "2026-11-16T00:00:00+03:00", "discountPercent": 12, "categoryIds": ["market", "bebek", "pet"]},
+    {"id": "onbir-onbir", "title": "11.11 Süper Gün", "subtitle": "Moda ve kozmetikte tek güne özel %20", "emoji": "⚡", "color": "#DB2777", "startsAt": "2026-11-11T00:00:00+03:00", "endsAt": "2026-11-12T00:00:00+03:00", "discountPercent": 20, "categoryIds": ["kadin", "erkek", "ayakkabi", "kozmetik"]},
+    {"id": "kara-cuma", "title": "Kara Cuma Haftası", "subtitle": "Tüm ürünlerde ekstra %15 indirim", "emoji": "🖤", "color": "#111827", "startsAt": "2026-11-23T00:00:00+03:00", "endsAt": "2026-11-28T00:00:00+03:00", "discountPercent": 15, "categoryIds": null},
+    {"id": "siber-pazartesi", "title": "Siber Pazartesi", "subtitle": "Teknolojide %18 son fırsat", "emoji": "💻", "color": "#0284C7", "startsAt": "2026-11-28T00:00:00+03:00", "endsAt": "2026-12-01T00:00:00+03:00", "discountPercent": 18, "categoryIds": ["telefon", "bilgisayar", "oyun", "tv"]}
+  ],
+  "coupons": [
+    {"code": "HOSGELDIN", "title": "Hoş geldin indirimi", "minAmount": 2500, "amount": 500, "percent": null, "maxDiscount": null, "categoryIds": null, "validFrom": "2026-01-01T00:00:00+03:00", "validUntil": "2027-12-31T23:59:00+03:00"},
+    {"code": "KASIM10", "title": "Kasım'a özel %10", "minAmount": 5000, "amount": null, "percent": 10, "maxDiscount": 2000, "categoryIds": null, "validFrom": "2026-11-01T00:00:00+03:00", "validUntil": "2026-12-01T00:00:00+03:00"},
+    {"code": "MARKET150", "title": "Market alışverişine 150 TL", "minAmount": 1000, "amount": 150, "percent": null, "maxDiscount": null, "categoryIds": ["market", "bebek", "pet"], "validFrom": "2026-11-02T00:00:00+03:00", "validUntil": "2026-11-16T00:00:00+03:00"},
+    {"code": "ONBIR1111", "title": "11.11'e özel 1.111 TL", "minAmount": 5555, "amount": 1111, "percent": null, "maxDiscount": null, "categoryIds": null, "validFrom": "2026-11-11T00:00:00+03:00", "validUntil": "2026-11-12T00:00:00+03:00"},
+    {"code": "KARACUMA", "title": "Kara Cuma %15 kupon", "minAmount": 10000, "amount": null, "percent": 15, "maxDiscount": 5000, "categoryIds": null, "validFrom": "2026-11-23T00:00:00+03:00", "validUntil": "2026-12-01T00:00:00+03:00"}
+  ],
   "categories": [
     {"id": "telefon", "name": "Telefon & Aksesuar", "emoji": "📱"},
     {"id": "bilgisayar", "name": "Bilgisayar & Tablet", "emoji": "💻"},

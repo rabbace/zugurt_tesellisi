@@ -17,6 +17,8 @@ function isCatalog(value: unknown): value is Catalog {
     typeof c.version === 'number' &&
     !!c.economy &&
     Array.isArray(c.categories) &&
+    Array.isArray(c.campaigns) &&
+    Array.isArray(c.coupons) &&
     Array.isArray(c.products) &&
     c.products.length > 0
   );

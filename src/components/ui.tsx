@@ -113,3 +113,71 @@ export function EmptyState({ emoji, title, subtitle }: { emoji: string; title: s
     </View>
   );
 }
+
+export function HeartButton({
+  active,
+  onPress,
+  size = 'md',
+}: {
+  active: boolean;
+  onPress: () => void;
+  size?: 'md' | 'lg';
+}) {
+  return (
+    <Pressable
+      onPress={onPress}
+      accessibilityLabel={active ? 'Favorilerden çıkar' : 'Favorilere ekle'}
+      hitSlop={8}
+      className={`bg-card rounded-full items-center justify-center border border-line active:opacity-60 ${
+        size === 'lg' ? 'w-11 h-11' : 'w-9 h-9'
+      }`}
+    >
+      <Text className={size === 'lg' ? 'text-xl' : 'text-base'}>{active ? '❤️' : '🤍'}</Text>
+    </Pressable>
+  );
+}
+
+export function Badge({ label, className = 'bg-chip', textClassName = 'text-link' }: { label: string; className?: string; textClassName?: string }) {
+  return (
+    <View className={`${className} rounded-md px-1.5 py-0.5 self-start`}>
+      <Text className={`${textClassName} text-2xs font-bold`}>{label}</Text>
+    </View>
+  );
+}
+
+export function StarPicker({ value, onChange }: { value: number; onChange: (value: number) => void }) {
+  return (
+    <View className="flex-row gap-2">
+      {[1, 2, 3, 4, 5].map((n) => (
+        <Pressable key={n} onPress={() => onChange(n)} hitSlop={6} className="active:opacity-60">
+          <Text className={`text-4xl ${n <= value ? 'text-amber-500' : 'text-muted'}`}>{n <= value ? '★' : '☆'}</Text>
+        </Pressable>
+      ))}
+    </View>
+  );
+}
+
+export function ScreenHeader({ title, onBack, right }: { title: string; onBack: () => void; right?: React.ReactNode }) {
+  return (
+    <View className="flex-row items-center px-3 pt-10 pb-3 bg-card border-b border-line">
+      <Pressable onPress={onBack} className="px-2 py-1 active:opacity-50" hitSlop={8}>
+        <Text className="text-link text-base font-bold">‹ Geri</Text>
+      </Pressable>
+      <Text className="text-ink text-base font-bold ml-2 flex-1" numberOfLines={1}>
+        {title}
+      </Text>
+      {right}
+    </View>
+  );
+}
+
+export function MenuRow({ icon, label, detail, onPress }: { icon: string; label: string; detail?: string; onPress: () => void }) {
+  return (
+    <Pressable onPress={onPress} className="flex-row items-center py-3.5 border-b border-line active:opacity-60">
+      <Text className="text-xl w-9">{icon}</Text>
+      <Text className="text-ink text-base flex-1">{label}</Text>
+      {detail ? <Text className="text-muted text-sm mr-2">{detail}</Text> : null}
+      <Text className="text-muted text-lg">›</Text>
+    </Pressable>
+  );
+}

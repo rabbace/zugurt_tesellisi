@@ -5,13 +5,18 @@ Hiçbir şey gerçekten satın alınmaz, hiçbir ödeme bilgisi istenmez.
 
 ## Özellikler
 
-- **Ürün kataloğu:** Telefon, elektronik, moda, market ve daha fazlası. Türkiye piyasasına yakın TL fiyatları ve indirimler.
-- **Uzaktan güncellenen fiyatlar:** Katalog `public/catalog.json` dosyasındadır, GitHub Pages'ten yayınlanır. Uygulama açılışta en güncel katalogu çeker. Yeni APK gerekmez. İnternet yoksa uygulama içindeki kopya kullanılır.
-- **Sanal kredi:** İlk açılışta başlangıç kredisi verilir. Kredi bitince ödüllü reklam izleyerek kredi kazanılır.
-- **Sepet ve ödeme:** Adet seçimi, kargo bedava eşiği, kargo ücreti, teslimat adresi.
-- **Sipariş ve kargo takibi:** Sipariş alındı → Hazırlanıyor → Kargoya verildi → Transfer merkezi → Dağıtımda → Teslim edildi. Rastgele gecikmeler ve "adreste bulunamadı" denemeleri olur. Kargoya verilmeden iptal edilen siparişin tutarı iade edilir.
-- **Bildirimler:** Her kargo aşamasında telefon bildirimi gelir (Android).
-- **Hızlı kargo modu:** Test için 1 gün = 2 dakika. Kapatınca süreç gerçek hayattaki gibi günler sürer.
+- **Ürün kataloğu:** 19 kategoride 120+ ürün, Türkiye piyasasına yakın TL fiyatları ve indirimler. Uzaktan güncellenir (`public/catalog.json`).
+- **Kasım kampanyaları:** Kasım Fırsatları, Market Fırsatları, 11.11 Süper Gün, Kara Cuma Haftası, Siber Pazartesi. Geri sayımlı vitrin, kampanya sayfası ve kampanyalı fiyatlar. Kampanya başlamadan bir gün önce ve başladığında telefon bildirimi.
+- **Kuponlar:** Hoş geldin kuponu, toplanabilir kampanya kuponları, alt limit ve kategori kuralları, sepette kupon seçimi.
+- **Favoriler:** Kalp ile favoriye ekleme, "eklediğinden beri X TL düştü" etiketi, fiyat düşünce bildirim.
+- **Yorumlar:** Teslim alınan ürünlere yıldız ve yorum yazma (+5 teselli puanı), "Faydalı" oyu, örnek kullanıcı yorumları.
+- **Çoklu adres:** Ev, İş, Annemler... Adres ekle, düzenle, sil, sepette seç.
+- **Sipariş ve kargo takibi:** Hazırlanıyor → Kargoda → Transfer → Dağıtımda → Teslim. Rastgele gecikme ve "adreste bulunamadı" denemeleri. Kargoya verilmeden iptal.
+- **14 gün iade:** Teslim edilen siparişte iade sebebi seçip iade başlatma, iade kargo takibi, onaylanınca kredi iadesi.
+- **Bildirim kutusu:** Kampanya, kargo, iade ve fiyat düşüşü bildirimleri.
+- **Diğer:** Taksit tablosu (bilgi amaçlı), "Yarın kapında" ve "Çok satan" rozetleri, son aramalar, popüler aramalar, son gezilen ürünler, benzer ürünler, koyu tema.
+- **Sanal kredi:** Başlangıç kredisi, bitince ödüllü reklam izleyerek kredi kazanma. Gerçek ödeme yok.
+- **Hızlı kargo modu:** Test için 1 gün = 2 dakika.
 
 ## Android'de test etme (bilgisayar gerekmez)
 
