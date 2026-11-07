@@ -22,9 +22,9 @@ export function FavoritesScreen({
   if (items.length === 0) {
     return (
       <EmptyState
-        emoji="🤍"
-        title="Favori listen boş"
-        subtitle="Beğendiğin ürünlerdeki kalbe dokun. Fiyatı düştüğünde ya da kampanyaya girdiğinde sana haber verelim."
+        icon="heart-outline"
+        title="Henüz gönlünü çalan yok"
+        subtitle="Beğendiğin ürünün kalbine dokun. Fiyatı düşünce haber veririm."
       />
     );
   }
@@ -42,7 +42,7 @@ export function FavoritesScreen({
             <ProductCard
               product={item.product}
               actions={actions}
-              note={drop > 0 ? `📉 Eklediğinden beri ${formatTL(drop)} düştü` : undefined}
+              note={drop > 0 ? `Eklediğinden beri ${formatTL(drop)} ucuzladı` : undefined}
             />
           </View>
         );

@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { Pressable, ScrollView, Switch, Text, View } from 'react-native';
 
+import { Icon } from '../components/Icon';
 import { MenuRow, PrimaryButton } from '../components/ui';
 import { formatDateTime, formatTL } from '../format';
 import { ThemeMode } from '../theme';
@@ -8,8 +9,8 @@ import { Catalog } from '../types';
 
 const THEME_OPTIONS: { value: ThemeMode; label: string }[] = [
   { value: 'system', label: 'Sistem' },
-  { value: 'light', label: '☀️ Açık' },
-  { value: 'dark', label: '🌙 Koyu' },
+  { value: 'light', label: 'Açık' },
+  { value: 'dark', label: 'Koyu' },
 ];
 
 export function AccountScreen({
@@ -75,23 +76,23 @@ export function AccountScreen({
 
   const adLabel = adLoading
     ? isSimulatedAd
-      ? '🎬 Reklam oynatılıyor...'
-      : '🎬 Reklam yükleniyor...'
+      ? 'Reklam oynuyor...'
+      : 'Reklam geliyor...'
     : adCooldownLeft > 0
       ? `Sonraki reklam ${adCooldownLeft} sn sonra`
-      : `🎬 Reklam izle, +${formatTL(catalog.economy.adReward)} kazan`;
+      : `Reklam izle, +${formatTL(catalog.economy.adReward)}`;
 
   return (
     <ScrollView contentContainerStyle={{ padding: 12, paddingBottom: 32 }} keyboardShouldPersistTaps="handled">
       <View className="bg-brand rounded-2xl p-5">
-        <Text className="text-brand-light text-xs">Sanal kredin</Text>
-        <Text className="text-white text-3xl font-extrabold mt-1">{formatTL(credit)}</Text>
-        <Text className="text-brand-light text-xs mt-1">Gerçek para değildir, hiçbir şey gerçekten satın alınmaz.</Text>
+        <Text className="font-body text-paper/80 text-xs">Sanal kredin</Text>
+        <Text className="font-display text-paper text-4xl mt-1">{formatTL(credit)}</Text>
+        <Text className="font-body text-paper/80 text-xs mt-1">Gerçek para değildir, hiçbir şey gerçekten satın alınmaz.</Text>
         <View className="mt-4">
           <PrimaryButton label={adLabel} variant="gold" onPress={onWatchAd} disabled={adLoading || adCooldownLeft > 0} />
         </View>
         {isSimulatedAd && (
-          <Text className="text-brand-light text-2xs mt-2 text-center">
+          <Text className="font-body text-paper/80 text-2xs mt-2 text-center">
             Web önizlemede reklam simüle edilir. Android uygulamasında gerçek ödüllü reklam gösterilir.
           </Text>
         )}
@@ -99,35 +100,37 @@ export function AccountScreen({
 
       <View className="flex-row flex-wrap -mx-1 mt-2">
         {[
-          { label: 'Teselli puanı', value: `🧠 ${dopaminePoints}` },
+          { label: 'Teselli puanı', value: `${dopaminePoints}` },
           { label: 'Toplam harcama', value: formatTL(totalSpent) },
           { label: 'Sipariş', value: orderCount.toString() },
           { label: 'İzlenen reklam', value: adsWatched.toString() },
         ].map((s) => (
           <View key={s.label} className="w-1/2 p-1">
             <View className="bg-card rounded-2xl p-3">
-              <Text className="text-muted text-xs">{s.label}</Text>
-              <Text className="text-ink text-base font-extrabold mt-1" numberOfLines={1}>{s.value}</Text>
+              <Text className="font-body text-muted text-xs">{s.label}</Text>
+              <Text className="text-ink text-base font-heavy mt-1" numberOfLines={1}>{s.value}</Text>
             </View>
           </View>
         ))}
       </View>
 
       <View className="bg-card rounded-2xl px-4 mt-2">
-        <MenuRow icon="📦" label="Siparişlerim" detail={orderCount ? `${orderCount}` : undefined} onPress={onOpenOrders} />
-        <MenuRow icon="❤️" label="Favorilerim" onPress={onOpenFavorites} />
-        <MenuRow icon="🎟️" label="Kuponlarım" detail={couponCount ? `${couponCount} kullanılabilir` : undefined} onPress={onOpenCoupons} />
-        <MenuRow icon="📍" label="Adreslerim" detail={`${addressCount} adres`} onPress={onOpenAddresses} />
-        <MenuRow icon="🔔" label="Bildirimler" detail={unreadCount ? `${unreadCount} yeni` : undefined} onPress={onOpenInbox} />
+        <MenuRow icon="cube-outline" label="Siparişlerim" detail={orderCount ? `${orderCount}` : undefined} onPress={onOpenOrders} />
+        <MenuRow icon="heart-outline" label="Favorilerim" onPress={onOpenFavorites} />
+        <MenuRow icon="pricetag-outline" label="Kuponlarım" detail={couponCount ? `${couponCount} kullanılabilir` : undefined} onPress={onOpenCoupons} />
+        <MenuRow icon="location-outline" label="Adreslerim" detail={`${addressCount} adres`} onPress={onOpenAddresses} />
+        <MenuRow icon="notifications-outline" label="Bildirimler" detail={unreadCount ? `${unreadCount} yeni` : undefined} onPress={onOpenInbox} />
         <View className="flex-row items-center py-3.5">
-          <Text className="text-xl w-9">✍️</Text>
-          <Text className="text-ink text-base flex-1">Değerlendirmelerim</Text>
-          <Text className="text-muted text-sm">{reviewCount} yorum</Text>
+          <View className="w-9">
+            <Icon name="create-outline" size={20} className="text-link" />
+          </View>
+          <Text className="font-body text-ink text-base flex-1">Değerlendirmelerim</Text>
+          <Text className="font-body text-muted text-sm">{reviewCount} yorum</Text>
         </View>
       </View>
 
       <View className="bg-card rounded-2xl p-4 mt-2">
-        <Text className="text-ink text-base font-bold">🌓 Görünüm</Text>
+        <Text className="text-ink text-base font-strong">Görünüm</Text>
         <View className="flex-row bg-sunken rounded-xl p-1 mt-3">
           {THEME_OPTIONS.map((o) => (
             <Pressable
@@ -135,7 +138,7 @@ export function AccountScreen({
               onPress={() => onTheme(o.value)}
               className={`flex-1 items-center py-2 rounded-lg ${theme === o.value ? 'bg-brand' : ''}`}
             >
-              <Text className={`text-sm font-semibold ${theme === o.value ? 'text-white' : 'text-soft'}`}>{o.label}</Text>
+              <Text className={`text-sm font-semi ${theme === o.value ? 'text-paper' : 'text-soft'}`}>{o.label}</Text>
             </Pressable>
           ))}
         </View>
@@ -144,30 +147,30 @@ export function AccountScreen({
       <View className="bg-card rounded-2xl p-4 mt-2">
         <View className="flex-row items-center justify-between">
           <View className="flex-1 pr-3">
-            <Text className="text-ink text-base font-bold">⏩ Hızlı kargo modu</Text>
-            <Text className="text-muted text-xs mt-0.5">
+            <Text className="text-ink text-base font-strong">Hızlı kargo modu</Text>
+            <Text className="font-body text-muted text-xs mt-0.5">
               Açıkken 1 gün = 2 dakika. Kapalıyken kargo gerçek hayattaki gibi günler sürer. Yeni siparişleri etkiler.
             </Text>
           </View>
-          <Switch value={fastMode} onValueChange={onFastMode} trackColor={{ true: '#6D28D9', false: switchOffColor }} thumbColor="#FFFFFF" />
+          <Switch value={fastMode} onValueChange={onFastMode} trackColor={{ true: '#A8623F', false: switchOffColor }} thumbColor="#FBF8F3" />
         </View>
       </View>
 
       <View className="bg-card rounded-2xl p-4 mt-2">
-        <Text className="text-ink text-base font-bold">🗂️ Ürün kataloğu</Text>
-        <Text className="text-muted text-xs mt-1">
+        <Text className="text-ink text-base font-strong">Ürün kataloğu</Text>
+        <Text className="font-body text-muted text-xs mt-1">
           {catalog.products.length} ürün · Fiyatlar {catalog.updatedAt} tarihli
           {catalogSource === 'remote' && lastFetchedAt ? ` · Son güncelleme ${formatDateTime(lastFetchedAt)}` : ' · Uygulama içi kopya'}
         </Text>
         <Pressable onPress={onRefreshCatalog} className="mt-2 active:opacity-50">
-          <Text className="text-link font-bold text-sm">Fiyatları güncelle</Text>
+          <Text className="text-link font-strong text-sm">Fiyatları güncelle</Text>
         </Pressable>
       </View>
 
       <View className="mt-4">
         {confirmReset ? (
           <View className="gap-2">
-            <Text className="text-red-600 text-xs text-center">Tüm siparişler, sepet ve kredi sıfırlanacak. Emin misin?</Text>
+            <Text className="font-body text-sale text-xs text-center">Tüm siparişler, sepet ve kredi sıfırlanacak. Emin misin?</Text>
             <PrimaryButton label="Evet, sıfırla" variant="danger" onPress={() => { setConfirmReset(false); onReset(); }} />
             <PrimaryButton label="Vazgeç" variant="outline" onPress={() => setConfirmReset(false)} />
           </View>

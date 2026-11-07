@@ -2,6 +2,7 @@ import React, { useEffect, useMemo, useState } from 'react';
 import { Modal, Pressable, ScrollView, Text, TextInput, View } from 'react-native';
 
 import { CardActions, ProductCard } from '../components/ProductCard';
+import { Icon } from '../components/Icon';
 import { HeartButton, PriceBlock, PrimaryButton, Rating, ScreenHeader, StarPicker, Stepper } from '../components/ui';
 import { formatDay, formatTL } from '../format';
 import { REAL_DAY_MS } from '../orders/simulate';
@@ -71,7 +72,7 @@ export function ProductDetail({
     <Modal visible animationType="slide" onRequestClose={onClose}>
       <View className="flex-1 bg-page">
         <ScreenHeader
-          title={category ? `${category.emoji} ${category.name}` : ''}
+          title={category ? category.name : ''}
           onBack={onClose}
           right={<HeartButton size="lg" active={actions.isFavorite(product.id)} onPress={() => actions.onToggleFavorite(product)} />}
         />
@@ -83,18 +84,18 @@ export function ProductDetail({
 
           {product.campaign && (
             <View className="px-4 py-2.5 flex-row items-center justify-between" style={{ backgroundColor: product.campaign.color }}>
-              <Text className="text-white text-sm font-bold flex-1 mr-2" numberOfLines={1}>
-                {product.campaign.emoji} {product.campaign.title} · ekstra %{product.campaign.discountPercent}
+              <Text className="text-paper text-sm font-strong flex-1 mr-2" numberOfLines={1}>
+                {product.campaign.title} · %{product.campaign.discountPercent}
               </Text>
-              <Text className="text-white text-xs font-semibold">
-                ⏱ {formatCountdown(Date.parse(product.campaign.endsAt) - now)}
+              <Text className="text-paper text-xs font-semi">
+                {formatCountdown(Date.parse(product.campaign.endsAt) - now)} kaldı
               </Text>
             </View>
           )}
 
           <View className="bg-card px-4 pb-4 pt-3">
-            <Text className="text-ink text-lg">
-              <Text className="font-extrabold">{product.brand} </Text>
+            <Text className="font-body text-ink text-lg">
+              <Text className="font-heavy">{product.brand} </Text>
               {product.title}
             </Text>
             <View className="mt-1">
@@ -105,8 +106,8 @@ export function ProductDetail({
             </View>
             {plans.length > 0 && (
               <Pressable onPress={() => setShowInstallments((v) => !v)} className="mt-2 active:opacity-60">
-                <Text className="text-link text-sm font-semibold">
-                  💳 {formatTL(plans[0].monthly)} x 3 ay peşin fiyatına · Taksit seçenekleri {showInstallments ? '▲' : '▼'}
+                <Text className="text-link text-sm font-semi">
+                  {formatTL(plans[0].monthly)} x 3 ay, peşin fiyatına · Taksitler {showInstallments ? '▴' : '▾'}
                 </Text>
               </Pressable>
             )}
@@ -114,12 +115,12 @@ export function ProductDetail({
               <View className="border border-line rounded-xl mt-2 overflow-hidden">
                 {plans.map((p) => (
                   <View key={p.months} className="flex-row justify-between px-3 py-2 border-b border-line">
-                    <Text className="text-ink text-sm w-16">{p.months} ay</Text>
-                    <Text className="text-ink text-sm font-semibold flex-1">{formatTL(p.monthly)} / ay</Text>
-                    <Text className="text-muted text-xs">{p.note}</Text>
+                    <Text className="font-body text-ink text-sm w-16">{p.months} ay</Text>
+                    <Text className="text-ink text-sm font-semi flex-1">{formatTL(p.monthly)} / ay</Text>
+                    <Text className="font-body text-muted text-xs">{p.note}</Text>
                   </View>
                 ))}
-                <Text className="text-muted text-2xs px-3 py-2">
+                <Text className="font-body text-muted text-2xs px-3 py-2">
                   Bilgi amaçlıdır. Bu uygulamada ödeme yalnızca sanal krediyle, tek seferde yapılır.
                 </Text>
               </View>
@@ -127,47 +128,47 @@ export function ProductDetail({
           </View>
 
           <View className="bg-card mt-2 px-4 py-3 gap-2">
-            <Text className="text-soft text-sm">
-              🚚 Tahmini teslimat: <Text className="font-bold text-ink">{earliest}</Text>
+            <Text className="font-body text-soft text-sm">
+              Tahmini teslimat: <Text className="font-strong text-ink">{earliest}</Text>
               {earliest !== latest ? ` – ${latest}` : ''}
             </Text>
-            <Text className="text-soft text-sm">
+            <Text className="font-body text-soft text-sm">
               {product.freeShipping
-                ? '✅ Kargo bedava'
-                : `📦 ${formatTL(economy.freeShippingThreshold)} üzeri kargo bedava, altı ${formatTL(economy.shippingFee)}`}
+                ? 'Kargo bedava'
+                : `${formatTL(economy.freeShippingThreshold)} üzeri kargo bedava, altı ${formatTL(economy.shippingFee)}`}
             </Text>
-            <Text className="text-soft text-sm">↩️ {economy.returnDays} gün içinde ücretsiz iade</Text>
-            <Text className="text-soft text-sm">
-              🏪 Satıcı: <Text className="font-bold text-ink">{product.seller}</Text> · 9.{(product.seller.length % 7) + 2} satıcı puanı
+            <Text className="font-body text-soft text-sm">{economy.returnDays} gün içinde ücretsiz iade</Text>
+            <Text className="font-body text-soft text-sm">
+              Satıcı: <Text className="font-strong text-ink">{product.seller}</Text> · 9.{(product.seller.length % 7) + 2} satıcı puanı
             </Text>
-            <Text className={`text-sm ${product.stock <= 10 ? 'text-orange-600 font-bold' : 'text-soft'}`}>
-              {product.stock <= 10 ? `⏳ Tükenmek üzere! Son ${product.stock} ürün` : '📦 Stokta var'}
+            <Text className={`text-sm ${product.stock <= 10 ? 'text-warm font-strong' : 'text-soft'}`}>
+              {product.stock <= 10 ? `Tükenmek üzere, son ${product.stock} ürün` : 'Stokta var'}
             </Text>
           </View>
 
           <View className="bg-card mt-2 px-4 py-3">
-            <Text className="text-ink text-base font-bold mb-1">Ürün açıklaması</Text>
-            <Text className="text-soft text-sm leading-5">{product.description}</Text>
+            <Text className="text-ink text-base font-strong mb-1">Ürün açıklaması</Text>
+            <Text className="font-body text-soft text-sm leading-5">{product.description}</Text>
           </View>
 
           <View className="bg-card mt-2 px-4 py-3">
             <View className="flex-row items-center justify-between">
-              <Text className="text-ink text-base font-bold">Değerlendirmeler</Text>
-              <Text className="text-muted text-xs">{summary.count.toLocaleString('tr-TR')} değerlendirme</Text>
+              <Text className="text-ink text-base font-strong">Değerlendirmeler</Text>
+              <Text className="font-body text-muted text-xs">{summary.count.toLocaleString('tr-TR')} değerlendirme</Text>
             </View>
             <View className="flex-row items-center mt-2">
-              <Text className="text-ink text-4xl font-extrabold mr-3">{summary.rating.toFixed(1)}</Text>
+              <Text className="text-ink text-4xl font-heavy mr-3">{summary.rating.toFixed(1)}</Text>
               <Rating rating={summary.rating} count={summary.count} />
             </View>
             <View className="mt-3">
               {canReview ? (
                 <PrimaryButton
-                  label={mine ? '✏️ Yorumunu düzenle' : '✍️ Ürünü değerlendir'}
+                  label={mine ? 'Yorumunu düzenle' : 'Ürünü değerlendir'}
                   variant="outline"
                   onPress={() => setWriting(true)}
                 />
               ) : (
-                <Text className="text-muted text-xs">Bu ürünü satın alıp teslim aldıktan sonra yorum yazabilirsin.</Text>
+                <Text className="font-body text-muted text-xs">Ürün eline ulaşınca yorumunu yazabilirsin.</Text>
               )}
             </View>
             {reviews.map((r) => {
@@ -175,18 +176,18 @@ export function ProductDetail({
               return (
                 <View key={r.id} className={`mt-3 pt-3 border-t border-line ${r.mine ? 'bg-chip -mx-4 px-4 pb-3' : ''}`}>
                   <View className="flex-row items-center justify-between">
-                    <Text className="text-amber-500 text-sm">{'★'.repeat(r.rating)}{'☆'.repeat(5 - r.rating)}</Text>
-                    <Text className="text-muted text-xs">{formatDay(r.createdAt)}</Text>
+                    <Text className="font-body text-star text-sm">{'★'.repeat(r.rating)}{'☆'.repeat(5 - r.rating)}</Text>
+                    <Text className="font-body text-muted text-xs">{formatDay(r.createdAt)}</Text>
                   </View>
-                  <Text className="text-ink text-sm mt-1">{r.text}</Text>
+                  <Text className="font-body text-ink text-sm mt-1">{r.text}</Text>
                   <View className="flex-row items-center justify-between mt-1.5">
-                    <Text className="text-muted text-xs">
-                      {r.mine ? '🙋 Senin yorumun' : `${r.author} · ✅ Satın aldı`}
+                    <Text className="font-body text-muted text-xs">
+                      {r.mine ? 'Senin yorumun' : `${r.author} · satın aldı`}
                     </Text>
                     {!r.mine && (
                       <Pressable onPress={() => onToggleHelpful(r.id)} hitSlop={6} className="active:opacity-60">
-                        <Text className={`text-xs ${voted ? 'text-link font-bold' : 'text-muted'}`}>
-                          👍 Faydalı ({r.helpful + (voted ? 1 : 0)})
+                        <Text className={`text-xs ${voted ? 'text-link font-strong' : 'text-muted'}`}>
+                          Faydalı ({r.helpful + (voted ? 1 : 0)})
                         </Text>
                       </Pressable>
                     )}
@@ -194,12 +195,12 @@ export function ProductDetail({
                 </View>
               );
             })}
-            <Text className="text-muted text-2xs mt-3">Diğer kullanıcı yorumları simülasyon amaçlı örnek yorumlardır.</Text>
+            <Text className="font-body text-muted text-2xs mt-3">Diğer kullanıcı yorumları simülasyon amaçlı örnek yorumlardır.</Text>
           </View>
 
           {similar.length > 0 && (
             <View className="mt-2">
-              <Text className="text-ink text-base font-bold px-4 pt-2">Benzer ürünler</Text>
+              <Text className="text-ink text-base font-strong px-4 pt-2">Benzer ürünler</Text>
               <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{ paddingHorizontal: 6, paddingVertical: 6 }}>
                 {similar.map((p) => (
                   <ProductCard key={p.id} product={p} actions={actions} compact />
@@ -211,7 +212,7 @@ export function ProductDetail({
 
         <View className="bg-card border-t border-line px-4 pt-3 pb-6">
           <View className="flex-row items-center justify-between mb-3">
-            <Text className="text-soft text-sm">Adet</Text>
+            <Text className="font-body text-soft text-sm">Adet</Text>
             <Stepper value={quantity} max={product.stock} onChange={(v) => setQuantity(Math.max(1, v))} />
           </View>
           <View className="flex-row gap-2">
@@ -258,10 +259,10 @@ function ReviewForm({
   const [text, setText] = useState(initial?.text ?? '');
   const valid = rating > 0 && text.trim().length >= 10;
   return (
-    <View className="absolute inset-0 bg-black/60 justify-end">
+    <View className="absolute inset-0 bg-dusk/60 justify-end">
       <View className="bg-card rounded-t-3xl p-5">
-        <Text className="text-ink text-lg font-extrabold">Ürünü değerlendir</Text>
-        <Text className="text-muted text-sm mt-1" numberOfLines={1}>
+        <Text className="text-ink text-lg font-heavy">Ürünü değerlendir</Text>
+        <Text className="font-body text-muted text-sm mt-1" numberOfLines={1}>
           {productTitle}
         </Text>
         <View className="mt-4 items-center">
@@ -274,16 +275,16 @@ function ReviewForm({
           placeholderTextColor={placeholderColor}
           multiline
           maxLength={500}
-          className="border border-line rounded-xl px-3 py-3 text-ink text-base mt-4 min-h-[110px]"
+          className="font-body border border-line rounded-xl px-3 py-3 text-ink text-base mt-4 min-h-[110px]"
           style={{ textAlignVertical: 'top' }}
         />
-        <Text className="text-muted text-xs text-right mt-1">{text.length}/500</Text>
+        <Text className="font-body text-muted text-xs text-right mt-1">{text.length}/500</Text>
         <View className="flex-row gap-2 mt-3">
           <View className="flex-1">
             <PrimaryButton label="Vazgeç" variant="outline" onPress={onCancel} />
           </View>
           <View className="flex-1">
-            <PrimaryButton label="Gönder (+5 puan)" disabled={!valid} onPress={() => onSubmit(rating, text.trim())} />
+            <PrimaryButton label="Gönder" disabled={!valid} onPress={() => onSubmit(rating, text.trim())} />
           </View>
         </View>
       </View>

@@ -60,13 +60,13 @@ export async function scheduleCampaignNotifications(
     const start = Date.parse(campaign.startsAt);
     const reminder = start - 24 * 60 * 60 * 1000;
     const plan = [
-      { at: reminder, title: `${campaign.emoji} Yarın başlıyor: ${campaign.title}`, body: `${campaign.subtitle}. Sepetini şimdiden hazırla!` },
+      { at: reminder, title: `Yarın başlıyor: ${campaign.title}`, body: `${campaign.subtitle}. Sepeti şimdiden hazırlamak ister misin?` },
       {
         at: start,
-        title: `${campaign.emoji} ${campaign.title} başladı!`,
+        title: `${campaign.title} başladı`,
         body: favoriteCount > 0
-          ? `Favorilerindeki ${favoriteCount} ürün indirime girdi. ${campaign.subtitle}.`
-          : `${campaign.subtitle}. Kaçırma!`,
+          ? `Favorilerindeki ${favoriteCount} ürün indirime girdi.`
+          : `${campaign.subtitle}.`,
       },
     ];
     for (const n of plan) {

@@ -1,7 +1,8 @@
 import React, { useState } from 'react';
 import { Pressable, ScrollView, Text, TextInput, View } from 'react-native';
 
-import { EmptyState, PrimaryButton, ScreenHeader } from '../components/ui';
+import { Icon, IconName } from '../components/Icon';
+import { EmptyState, PrimaryButton, Radio, ScreenHeader } from '../components/ui';
 import { formatDateTime, formatDay, formatTL } from '../format';
 import { evaluateCoupon, isActive } from '../pricing';
 import { formatAddress } from '../store/useStore';
@@ -26,14 +27,14 @@ function Field({
 }) {
   return (
     <View className="mt-3">
-      <Text className="text-soft text-sm mb-1">{label}</Text>
+      <Text className="font-body text-soft text-sm mb-1">{label}</Text>
       <TextInput
         value={value}
         onChangeText={onChange}
         keyboardType={keyboardType}
         multiline={multiline}
         placeholderTextColor={placeholderColor}
-        className="border border-line rounded-xl px-3 py-2.5 text-ink text-base bg-card"
+        className="font-body border border-line rounded-xl px-3 py-2.5 text-ink text-base bg-card"
       />
     </View>
   );
@@ -60,8 +61,8 @@ function AddressForm({
 
   return (
     <ScrollView contentContainerStyle={{ padding: 16, paddingBottom: 40 }} keyboardShouldPersistTaps="handled">
-      <Text className="text-ink text-lg font-extrabold">{initial ? 'Adresi düzenle' : 'Yeni adres ekle'}</Text>
-      <Text className="text-soft text-sm mt-3 mb-1">Adres başlığı</Text>
+      <Text className="text-ink text-lg font-heavy">{initial ? 'Adresi düzenle' : 'Yeni adres ekle'}</Text>
+      <Text className="font-body text-soft text-sm mt-3 mb-1">Adres başlığı</Text>
       <View className="flex-row flex-wrap gap-2">
         {ADDRESS_TITLES.map((t) => (
           <Pressable
@@ -69,7 +70,7 @@ function AddressForm({
             onPress={() => set('title')(t)}
             className={`px-4 py-2 rounded-full ${a.title === t ? 'bg-brand' : 'bg-card border border-line'}`}
           >
-            <Text className={`text-sm font-semibold ${a.title === t ? 'text-white' : 'text-soft'}`}>{t}</Text>
+            <Text className={`text-sm font-semi ${a.title === t ? 'text-paper' : 'text-soft'}`}>{t}</Text>
           </Pressable>
         ))}
       </View>
@@ -84,7 +85,7 @@ function AddressForm({
         </View>
       </View>
       <Field label="Mahalle, sokak, bina ve daire no" value={a.line} onChange={set('line')} multiline placeholderColor={placeholderColor} />
-      <Text className="text-muted text-xs mt-2">Sanal teslimat içindir, gerçek bir adres girmen gerekmez.</Text>
+      <Text className="font-body text-muted text-xs mt-2">Sanal teslimat içindir, gerçek bir adres girmen gerekmez.</Text>
       <View className="flex-row gap-2 mt-5">
         <View className="flex-1">
           <PrimaryButton label="Vazgeç" variant="outline" onPress={onCancel} />
@@ -145,24 +146,25 @@ export function AddressBook({
                 className={`bg-card rounded-2xl p-4 mb-2 border-2 active:opacity-80 ${selected ? 'border-brand' : 'border-line'}`}
               >
                 <View className="flex-row items-center justify-between">
-                  <Text className="text-ink text-base font-bold">
-                    {selected ? '🔘' : '⚪'} {a.title === 'Ev' ? '🏠' : a.title === 'İş' ? '🏢' : '📍'} {a.title}
-                  </Text>
+                  <View className="flex-row items-center gap-2">
+                    <Radio selected={selected} />
+                    <Text className="text-ink text-base font-strong">{a.title}</Text>
+                  </View>
                   <View className="flex-row gap-4">
                     <Pressable onPress={() => setEditing(a)} hitSlop={8}>
-                      <Text className="text-link text-sm font-bold">Düzenle</Text>
+                      <Text className="text-link text-sm font-strong">Düzenle</Text>
                     </Pressable>
                     {addresses.length > 1 && (
                       <Pressable onPress={() => onRemove(a.id)} hitSlop={8}>
-                        <Text className="text-red-600 text-sm font-bold">Sil</Text>
+                        <Text className="text-sale text-sm font-strong">Sil</Text>
                       </Pressable>
                     )}
                   </View>
                 </View>
-                <Text className="text-soft text-sm mt-1.5">
+                <Text className="font-body text-soft text-sm mt-1.5">
                   {a.fullName} · {a.phone}
                 </Text>
-                <Text className="text-soft text-sm mt-0.5">{formatAddress(a)}</Text>
+                <Text className="font-body text-soft text-sm mt-0.5">{formatAddress(a)}</Text>
               </Pressable>
             );
           })}
@@ -194,17 +196,17 @@ function CouponTicket({
   return (
     <View className="bg-card rounded-2xl mb-2 flex-row overflow-hidden border border-line">
       <View className="bg-brand w-24 items-center justify-center p-2">
-        <Text className="text-white text-lg font-extrabold text-center">{couponValue(coupon)}</Text>
-        <Text className="text-white/80 text-2xs mt-0.5">İNDİRİM</Text>
+        <Text className="text-paper text-lg font-heavy text-center">{couponValue(coupon)}</Text>
+        <Text className="font-body text-paper/80 text-2xs mt-0.5">indirim</Text>
       </View>
       <View className="flex-1 p-3">
-        <Text className="text-ink text-base font-bold">{coupon.title}</Text>
-        <Text className="text-muted text-xs mt-0.5">
+        <Text className="text-ink text-base font-strong">{coupon.title}</Text>
+        <Text className="font-body text-muted text-xs mt-0.5">
           Kod: {coupon.code} · Min. {formatTL(coupon.minAmount)}
         </Text>
-        <Text className="text-muted text-xs">Son gün: {formatDay(Date.parse(coupon.validUntil) - 1)}</Text>
+        <Text className="font-body text-muted text-xs">Son gün: {formatDay(Date.parse(coupon.validUntil) - 1)}</Text>
         <View className="flex-row items-center justify-between mt-1.5">
-          <Text className={`text-xs font-bold ${statusColor}`}>{status}</Text>
+          <Text className={`text-xs font-strong ${statusColor}`}>{status}</Text>
           {action}
         </View>
       </View>
@@ -236,24 +238,24 @@ export function CouponsScreen({
     <View className="flex-1 bg-page">
       <ScreenHeader title="Kuponlarım" onBack={onClose} />
       <ScrollView contentContainerStyle={{ padding: 12, paddingBottom: 32 }}>
-        {mine.length === 0 && <EmptyState emoji="🎟️" title="Henüz kuponun yok" subtitle="Aşağıdan kupon toplayabilirsin." />}
+        {mine.length === 0 && <EmptyState icon="pricetag-outline" title="Cebin boş" subtitle="Aşağıda seni bekleyen kuponlar var, bir göz at." />}
         {mine.map(({ claim, coupon }) => {
           const expired = now >= Date.parse(coupon.validUntil);
           const notYet = now < Date.parse(coupon.validFrom);
           const status = claim.usedAt
-            ? `✔ ${formatDay(claim.usedAt)} tarihinde kullanıldı`
+            ? `${formatDay(claim.usedAt)} tarihinde kullandın`
             : expired
               ? 'Süresi doldu'
               : notYet
                 ? `${formatDay(Date.parse(coupon.validFrom))} günü aktif olacak`
                 : 'Kullanılabilir · Sepette seç';
-          const color = claim.usedAt || expired ? 'text-muted' : notYet ? 'text-orange-600' : 'text-emerald-600';
+          const color = claim.usedAt || expired ? 'text-muted' : notYet ? 'text-warm' : 'text-fresh';
           return <CouponTicket key={coupon.code} coupon={coupon} status={status} statusColor={color} />;
         })}
 
         {claimable.length > 0 && (
           <>
-            <Text className="text-ink text-lg font-extrabold mt-4 mb-2">🎁 Kazanılabilir kuponlar</Text>
+            <Text className="text-ink text-lg font-heavy mt-4 mb-2">Toplanabilir kuponlar</Text>
             {claimable.map((coupon) => (
               <CouponTicket
                 key={coupon.code}
@@ -262,7 +264,7 @@ export function CouponsScreen({
                 statusColor="text-soft"
                 action={
                   <Pressable onPress={() => onClaim(coupon.code)} className="bg-brand rounded-lg px-3 py-1.5 active:opacity-70">
-                    <Text className="text-white text-xs font-bold">Kuponu al</Text>
+                    <Text className="text-paper text-xs font-strong">Kuponu al</Text>
                   </Pressable>
                 }
               />
@@ -301,7 +303,7 @@ export function CouponPicker({
       <ScreenHeader title="Kupon seç" onBack={onClose} />
       <ScrollView contentContainerStyle={{ padding: 12, paddingBottom: 32 }}>
         {usable.length === 0 && (
-          <EmptyState emoji="🎟️" title="Kullanılabilir kuponun yok" subtitle="Hesabım → Kuponlarım bölümünden kupon toplayabilirsin." />
+          <EmptyState icon="pricetag-outline" title="Şu an uygun kupon yok" subtitle="Hesabım > Kuponlarım sayfasından yenilerini toplayabilirsin." />
         )}
         {usable.map((coupon) => {
           const check = evaluateCoupon(coupon, items, now);
@@ -311,7 +313,7 @@ export function CouponPicker({
               key={coupon.code}
               coupon={coupon}
               status={check.ok ? `Bu sepette ${formatTL(check.discount)} indirim` : check.reason}
-              statusColor={check.ok ? 'text-emerald-600' : 'text-muted'}
+              statusColor={check.ok ? 'text-fresh' : 'text-muted'}
               action={
                 <Pressable
                   disabled={!check.ok}
@@ -319,9 +321,9 @@ export function CouponPicker({
                     onSelect(isSel ? null : coupon.code);
                     onClose();
                   }}
-                  className={`rounded-lg px-3 py-1.5 active:opacity-70 disabled:opacity-40 ${isSel ? 'bg-red-600' : 'bg-brand'}`}
+                  className={`rounded-lg px-3 py-1.5 active:opacity-70 disabled:opacity-40 ${isSel ? 'bg-brick' : 'bg-brand'}`}
                 >
-                  <Text className="text-white text-xs font-bold">{isSel ? 'Kaldır' : 'Uygula'}</Text>
+                  <Text className="text-paper text-xs font-strong">{isSel ? 'Kaldır' : 'Uygula'}</Text>
                 </Pressable>
               }
             />
@@ -332,12 +334,12 @@ export function CouponPicker({
   );
 }
 
-const INBOX_ICONS: Record<InboxItem['kind'], string> = {
-  campaign: '📣',
-  order: '📦',
-  price: '📉',
-  return: '↩️',
-  coupon: '🎟️',
+const INBOX_ICONS: Record<InboxItem['kind'], IconName> = {
+  campaign: 'megaphone-outline',
+  order: 'cube-outline',
+  price: 'trending-down-outline',
+  return: 'return-down-back-outline',
+  coupon: 'pricetag-outline',
 };
 
 export function InboxScreen({ items, onClose }: { items: InboxItem[]; onClose: () => void }) {
@@ -345,14 +347,16 @@ export function InboxScreen({ items, onClose }: { items: InboxItem[]; onClose: (
     <View className="flex-1 bg-page">
       <ScreenHeader title="Bildirimler" onBack={onClose} />
       <ScrollView contentContainerStyle={{ padding: 12, paddingBottom: 32 }}>
-        {items.length === 0 && <EmptyState emoji="🔔" title="Bildirimin yok" subtitle="Kampanya, kargo ve fiyat düşüşü haberleri burada görünür." />}
+        {items.length === 0 && <EmptyState icon="notifications-outline" title="Sessiz sakin" subtitle="Kampanya, kargo ve fiyat haberleri gelince burada toplanacak." />}
         {items.map((i) => (
           <View key={i.id} className={`rounded-2xl p-3 mb-2 flex-row ${i.read ? 'bg-card' : 'bg-chip'}`}>
-            <Text className="text-2xl mr-3">{INBOX_ICONS[i.kind]}</Text>
+            <View className="bg-card rounded-full w-10 h-10 items-center justify-center mr-3">
+              <Icon name={INBOX_ICONS[i.kind]} size={20} className="text-link" />
+            </View>
             <View className="flex-1">
-              <Text className="text-ink text-base font-bold">{i.title}</Text>
-              <Text className="text-soft text-sm mt-0.5">{i.body}</Text>
-              <Text className="text-muted text-xs mt-1">{formatDateTime(i.at)}</Text>
+              <Text className="text-ink text-base font-strong">{i.title}</Text>
+              <Text className="font-body text-soft text-sm mt-0.5">{i.body}</Text>
+              <Text className="font-body text-muted text-xs mt-1">{formatDateTime(i.at)}</Text>
             </View>
           </View>
         ))}

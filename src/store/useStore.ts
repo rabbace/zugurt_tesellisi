@@ -167,8 +167,8 @@ export const useStore = create<StoreState>()(
             {
               id: uid('in'),
               kind: 'coupon',
-              title: 'Hoş geldin! 🎁',
-              body: 'İlk siparişine özel HOSGELDIN kuponu hesabına tanımlandı.',
+              title: 'Hoş geldin',
+              body: 'İlk siparişin için HOSGELDIN kuponunu cebine koydum. 2.500 TL üstüne 500 TL indirim.',
               at: now,
               read: false,
             },

@@ -102,7 +102,7 @@ export function buildOrder(params: {
     deliverAt = Math.max(deliverAt, outAt + hour);
   }
 
-  add('delivered', deliverAt, 'Teslim edildi', 'Gönderin teslim edildi. Keyifli kullanımlar! (Sanal 😅)');
+  add('delivered', deliverAt, 'Teslim edildi', 'Paketin kapında. Güle güle kullan, sanal da olsa.');
 
   return {
     id: `${t0.toString(36).toUpperCase()}${randomInt(100, 999)}`,
@@ -168,15 +168,15 @@ export const STAGE_LABELS: Record<OrderStage, string> = {
 };
 
 export const STAGE_COLORS: Record<OrderStage, string> = {
-  placed: 'bg-slate-500',
-  preparing: 'bg-amber-500',
-  shipped: 'bg-sky-500',
-  transfer: 'bg-sky-500',
-  delayed: 'bg-red-500',
-  out_for_delivery: 'bg-violet-600',
-  delivery_failed: 'bg-red-500',
-  delivered: 'bg-emerald-600',
-  cancelled: 'bg-slate-400',
+  placed: 'bg-stone',
+  preparing: 'bg-umber',
+  shipped: 'bg-harbor',
+  transfer: 'bg-harbor',
+  delayed: 'bg-brick',
+  out_for_delivery: 'bg-brand',
+  delivery_failed: 'bg-brick',
+  delivered: 'bg-sage',
+  cancelled: 'bg-stone',
 };
 
 export const RETURN_REASONS = [

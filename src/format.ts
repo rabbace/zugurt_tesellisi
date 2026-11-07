@@ -6,6 +6,11 @@ export function formatTL(value: number): string {
   })} TL`;
 }
 
+export function formatCompactTL(value: number): string {
+  if (Math.abs(value) >= 100000) return `${Math.floor(value / 1000).toLocaleString('tr-TR')} bin TL`;
+  return formatTL(Math.floor(value));
+}
+
 export function discountPercent(price: number, originalPrice: number | null): number {
   if (!originalPrice || originalPrice <= price) return 0;
   return Math.round(((originalPrice - price) / originalPrice) * 100);

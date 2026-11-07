@@ -3,25 +3,35 @@
 @tailwind utilities;
 
 :root {
-  --color-page: 244 244 246;
-  --color-card: 255 255 255;
-  --color-sunken: 241 245 249;
-  --color-ink: 15 23 42;
-  --color-soft: 51 65 85;
-  --color-muted: 100 116 139;
-  --color-line: 226 232 240;
-  --color-link: 109 40 217;
-  --color-chip: 237 233 254;
+  --color-page: 244 239 232;
+  --color-card: 251 248 243;
+  --color-sunken: 239 232 223;
+  --color-ink: 59 52 46;
+  --color-soft: 94 85 76;
+  --color-muted: 122 112 102;
+  --color-line: 228 219 207;
+  --color-link: 154 90 58;
+  --color-chip: 243 228 216;
+  --color-sale: 168 64 48;
+  --color-fresh: 74 112 89;
+  --color-fresh-soft: 226 236 228;
+  --color-warm: 150 92 34;
+  --color-star: 196 146 58;
 }
 
 .dark:root {
-  --color-page: 10 10 16;
-  --color-card: 26 26 36;
-  --color-sunken: 38 38 52;
-  --color-ink: 241 245 249;
-  --color-soft: 214 220 230;
-  --color-muted: 156 163 180;
-  --color-line: 52 52 70;
-  --color-link: 196 181 253;
-  --color-chip: 46 16 101;
+  --color-page: 31 27 24;
+  --color-card: 41 36 31;
+  --color-sunken: 51 45 39;
+  --color-ink: 237 230 220;
+  --color-soft: 210 200 188;
+  --color-muted: 163 154 143;
+  --color-line: 61 54 47;
+  --color-link: 226 168 132;
+  --color-chip: 62 46 37;
+  --color-sale: 232 140 120;
+  --color-fresh: 156 192 168;
+  --color-fresh-soft: 44 56 48;
+  --color-warm: 224 168 106;
+  --color-star: 222 180 98;
 }
